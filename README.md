@@ -7,7 +7,8 @@ Turn every customer review into a reputation win. Frontline uses Claude AI to cr
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **Database**: Supabase (Postgres + Auth)
+- **Database**: Vercel Postgres
+- **Auth**: NextAuth.js v4 (credentials / JWT)
 - **AI**: Claude API (`claude-sonnet-4-6`)
 - **Payments**: Stripe
 - **Deployment**: Vercel
@@ -15,7 +16,7 @@ Turn every customer review into a reputation win. Frontline uses Claude AI to cr
 ## Features
 
 - Landing page with hero, features, pricing, CTA
-- Auth (sign up / login / logout) via Supabase
+- Auth (sign up / login / logout) via NextAuth + bcrypt
 - Business onboarding (name, industry, location, tone profile)
 - Dashboard with reputation score, stats, and recent reviews
 - AI review responder — paste review → select tone → Claude generates response
@@ -44,36 +45,33 @@ Required variables:
 
 | Variable | Description |
 |---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-only) |
+| `POSTGRES_URL` | Vercel Postgres connection string |
+| `POSTGRES_URL_NON_POOLING` | Direct (non-pooled) Postgres URL |
+| `NEXTAUTH_SECRET` | Random secret ≥ 32 chars (`openssl rand -base64 32`) |
+| `NEXTAUTH_URL` | App URL (e.g. `http://localhost:3000`) |
 | `ANTHROPIC_API_KEY` | Claude API key from console.anthropic.com |
 | `STRIPE_SECRET_KEY` | Stripe secret key |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook endpoint secret |
 | `STRIPE_STARTER_PRICE_ID` | Stripe Price ID for Starter plan |
 | `STRIPE_PRO_PRICE_ID` | Stripe Price ID for Pro plan |
-| `NEXT_PUBLIC_APP_URL` | Your app URL (e.g. `http://localhost:3000`) |
+| `NEXT_PUBLIC_APP_URL` | Your app URL |
 
-### 3. Supabase setup
+### 3. Database setup
 
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Run the migration in the Supabase SQL editor:
+Run the migration SQL in your Vercel Postgres console (or any Postgres client):
 
 ```bash
-# Contents of supabase/migrations/001_initial_schema.sql
+# File: db/migrations/001_initial_schema.sql
 ```
-
-3. Enable **Email** auth in Authentication → Providers
 
 ### 4. Stripe setup
 
-1. Create a Stripe account at [stripe.com](https://stripe.com)
-2. Create two recurring products:
+1. Create two recurring products in Stripe:
    - **Starter**: $49/month
    - **Pro**: $129/month
-3. Copy the Price IDs into `.env.local`
-4. Set up a webhook endpoint pointing to `https://your-domain.com/api/webhook` with these events:
+2. Copy the Price IDs into `.env.local`
+3. Set up a webhook pointing to `https://your-domain.com/api/webhook` with events:
    - `checkout.session.completed`
    - `customer.subscription.updated`
    - `customer.subscription.deleted`
@@ -102,7 +100,12 @@ src/
 │   │   ├── settings/page.tsx # Business settings
 │   │   └── billing/page.tsx  # Stripe subscription
 │   └── api/
+│       ├── auth/
+│       │   ├── [...nextauth]/ # NextAuth handler
+│       │   └── register/      # User registration
+│       ├── business/          # Business CRUD
 │       ├── generate-response/ # Claude API call
+│       ├── reviews/[id]/      # Review status update
 │       ├── stripe/            # Checkout session
 │       ├── stripe/portal/     # Billing portal
 │       └── webhook/           # Stripe webhooks
@@ -110,20 +113,23 @@ src/
 │   ├── landing/  (navbar, hero, features, pricing, cta, footer)
 │   ├── dashboard/ (sidebar, mobile-nav, stat-card, review-card, review-generator)
 │   ├── auth/     (login-form, signup-form)
-│   └── ui/       (button, input, select, textarea, card, badge)
+│   ├── ui/       (button, input, select, textarea, card, badge)
+│   └── providers.tsx  # SessionProvider wrapper
 ├── lib/
-│   ├── supabase/ (client.ts, server.ts)
+│   ├── auth.ts     # NextAuth config
+│   ├── db.ts       # Vercel Postgres query helpers
 │   ├── stripe.ts
 │   └── utils.ts
 └── types/
-    └── database.ts
+    ├── database.ts   # Shared enums (ToneProfile, etc.)
+    └── next-auth.d.ts # Session type extension
 ```
 
 ## Deployment (Vercel)
 
 1. Push to GitHub
 2. Import the repo in [vercel.com](https://vercel.com)
-3. Add all environment variables from `.env.local.example`
-4. Deploy
-
-Update `NEXT_PUBLIC_APP_URL` to your production URL, and update your Stripe webhook endpoint to the production URL.
+3. Create a **Vercel Postgres** store and link it to the project (env vars auto-populate)
+4. Add remaining env vars from `.env.local.example`
+5. Deploy
+6. Run `db/migrations/001_initial_schema.sql` in the Vercel Postgres console

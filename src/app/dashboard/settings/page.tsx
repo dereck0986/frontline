@@ -1,28 +1,16 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
-import { createServerClient } from "@/lib/supabase/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getBusinessByUserId } from "@/lib/db";
 import { SettingsForm } from "./settings-form";
-import type { Database } from "@/types/database";
-
-type Business = Database["public"]["Tables"]["businesses"]["Row"];
 
 export default async function SettingsPage() {
-  const supabase = createServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await getServerSession(authOptions);
+  if (!session?.user) redirect("/login");
 
-  if (!session) redirect("/login");
-
-  const { data: businessRaw } = await supabase
-    .from("businesses")
-    .select("*")
-    .eq("user_id", session.user.id)
-    .single();
-
-  const business = businessRaw as Business | null;
-
+  const business = await getBusinessByUserId(session.user.id);
   if (!business) redirect("/onboarding");
 
   return (
@@ -34,7 +22,7 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      <SettingsForm business={business as Business} />
+      <SettingsForm business={business} />
     </div>
   );
 }

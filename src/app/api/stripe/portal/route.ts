@@ -1,30 +1,18 @@
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
+import { getSubscriptionByUserId } from "@/lib/db";
 
 export async function POST() {
-  const supabase = createRouteHandlerClient({ cookies });
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: subscription } = await supabase
-    .from("subscriptions")
-    .select("stripe_customer_id")
-    .eq("user_id", session.user.id)
-    .single();
-
+  const subscription = await getSubscriptionByUserId(session.user.id);
   if (!subscription?.stripe_customer_id) {
-    return NextResponse.json(
-      { error: "No billing account found" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "No billing account found" }, { status: 404 });
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";

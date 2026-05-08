@@ -1,7 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
-import { createServerClient } from "@/lib/supabase/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getBusinessByUserId } from "@/lib/db";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { MobileNav } from "@/components/dashboard/mobile-nav";
 
@@ -10,36 +12,23 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await getServerSession(authOptions);
+  if (!session?.user) redirect("/login");
 
-  if (!session) {
-    redirect("/login");
-  }
-
-  // Get business data
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("name")
-    .eq("user_id", session.user.id)
-    .single();
-
-  if (!business) {
-    redirect("/onboarding");
-  }
-
-  const businessName = (business as { name: string }).name;
+  const business = await getBusinessByUserId(session.user.id);
+  if (!business) redirect("/onboarding");
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar
         userEmail={session.user.email ?? ""}
-        businessName={businessName}
+        businessName={business.name}
       />
       <div className="flex-1 flex flex-col min-w-0">
-        <MobileNav businessName={businessName} userEmail={session.user.email ?? ""} />
+        <MobileNav
+          businessName={business.name}
+          userEmail={session.user.email ?? ""}
+        />
         <main className="flex-1 p-6 lg:p-8">{children}</main>
       </div>
     </div>

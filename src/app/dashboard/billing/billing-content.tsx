@@ -7,9 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { PLANS } from "@/lib/stripe";
 import { Check, CreditCard, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Database } from "@/types/database";
-
-type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"];
+import type { Subscription } from "@/lib/db";
 
 const PLAN_ORDER = ["free", "starter", "pro"] as const;
 
@@ -53,10 +51,7 @@ export function BillingContent({ subscription, userEmail }: BillingContentProps)
     setLoading("manage");
 
     try {
-      const res = await fetch("/api/stripe/portal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
 
       if (!res.ok) {
         const body = await res.json();
@@ -73,32 +68,26 @@ export function BillingContent({ subscription, userEmail }: BillingContentProps)
 
   return (
     <div className="space-y-6">
-      {/* Current Plan */}
       <Card>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-gray-900 mb-1">
-              Current Plan
-            </h2>
+            <h2 className="text-base font-semibold text-gray-900 mb-1">Current Plan</h2>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-gray-900 capitalize">
                 {currentPlan}
               </span>
-              <Badge
-                variant={
-                  subscription?.status === "active" ? "success" : "warning"
-                }
-              >
+              <Badge variant={subscription?.status === "active" ? "success" : "warning"}>
                 {subscription?.status ?? "active"}
               </Badge>
             </div>
             {subscription?.current_period_end && (
               <p className="text-sm text-gray-500 mt-1">
                 Renews{" "}
-                {new Date(subscription.current_period_end).toLocaleDateString(
-                  "en-US",
-                  { month: "long", day: "numeric", year: "numeric" }
-                )}
+                {new Date(subscription.current_period_end).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
               </p>
             )}
           </div>
@@ -117,11 +106,8 @@ export function BillingContent({ subscription, userEmail }: BillingContentProps)
         </div>
       </Card>
 
-      {/* Plans */}
       <div>
-        <h2 className="text-base font-semibold text-gray-900 mb-4">
-          Available Plans
-        </h2>
+        <h2 className="text-base font-semibold text-gray-900 mb-4">Available Plans</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(["starter", "pro"] as const).map((planKey) => {
             const plan = PLANS[planKey];
@@ -134,18 +120,12 @@ export function BillingContent({ subscription, userEmail }: BillingContentProps)
                 key={planKey}
                 className={cn(
                   "rounded-xl border p-6",
-                  isCurrent
-                    ? "border-brand-600 bg-brand-50"
-                    : planKey === "pro"
-                    ? "border-gray-200 bg-white"
-                    : "border-gray-200 bg-white"
+                  isCurrent ? "border-brand-600 bg-brand-50" : "border-gray-200 bg-white"
                 )}
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-gray-900">{plan.name}</h3>
-                  {isCurrent && (
-                    <Badge variant="info">Current plan</Badge>
-                  )}
+                  {isCurrent && <Badge variant="info">Current plan</Badge>}
                 </div>
                 <div className="mb-5">
                   <span className="text-3xl font-extrabold text-gray-900">
@@ -155,10 +135,7 @@ export function BillingContent({ subscription, userEmail }: BillingContentProps)
                 </div>
                 <ul className="space-y-2 mb-6">
                   {plan.features.map((f) => (
-                    <li
-                      key={f}
-                      className="flex items-center gap-2 text-sm text-gray-600"
-                    >
+                    <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
                       <Check size={14} className="text-brand-600 shrink-0" />
                       {f}
                     </li>
@@ -171,11 +148,7 @@ export function BillingContent({ subscription, userEmail }: BillingContentProps)
                   loading={loading === planKey}
                   onClick={() => handleUpgrade(planKey)}
                 >
-                  {isCurrent
-                    ? "Current plan"
-                    : isDowngrade
-                    ? "Downgrade"
-                    : "Upgrade"}
+                  {isCurrent ? "Current plan" : isDowngrade ? "Downgrade" : "Upgrade"}
                 </Button>
               </div>
             );

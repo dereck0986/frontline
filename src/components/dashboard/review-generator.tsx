@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -32,15 +31,9 @@ interface ReviewGeneratorProps {
   defaultTone: ToneProfile;
 }
 
-export function ReviewGenerator({
-  businessId,
-  defaultTone,
-}: ReviewGeneratorProps) {
+export function ReviewGenerator({ businessId, defaultTone }: ReviewGeneratorProps) {
   const router = useRouter();
-  const supabase = createClient();
-  const [generatedResponse, setGeneratedResponse] = useState<string | null>(
-    null
-  );
+  const [generatedResponse, setGeneratedResponse] = useState<string | null>(null);
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -52,10 +45,7 @@ export function ReviewGenerator({
   const { register, handleSubmit, watch, setValue, formState: { errors } } =
     useForm<FormData>({
       resolver: zodResolver(schema),
-      defaultValues: {
-        tone: defaultTone,
-        star_rating: 0,
-      },
+      defaultValues: { tone: defaultTone, star_rating: 0 },
     });
 
   const selectedTone = watch("tone");
@@ -105,22 +95,20 @@ export function ReviewGenerator({
     if (!reviewId) return;
     setSaving(true);
 
-    const { error } = await supabase
-      .from("reviews")
-      .update({ status: "responded" })
-      .eq("id", reviewId);
+    await fetch(`/api/reviews/${reviewId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "responded" }),
+    });
 
-    if (!error) {
-      setSaved(true);
-      router.refresh();
-    }
+    setSaved(true);
     setSaving(false);
+    router.refresh();
   };
 
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {/* Star rating */}
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-2">
             Star Rating
@@ -155,7 +143,6 @@ export function ReviewGenerator({
           )}
         </div>
 
-        {/* Tone */}
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-2">
             Response Tone
@@ -179,7 +166,6 @@ export function ReviewGenerator({
           </div>
         </div>
 
-        {/* Review text */}
         <Textarea
           id="review_text"
           label="Paste the customer review"
@@ -206,15 +192,12 @@ export function ReviewGenerator({
         </Button>
       </form>
 
-      {/* Generated Response */}
       {generatedResponse && (
         <div className="rounded-xl border border-brand-200 bg-brand-50 p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Sparkles size={16} className="text-brand-600" />
-              <span className="text-sm font-semibold text-brand-700">
-                AI Response
-              </span>
+              <span className="text-sm font-semibold text-brand-700">AI Response</span>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -224,35 +207,22 @@ export function ReviewGenerator({
                 onClick={handleCopy}
               >
                 {copied ? (
-                  <>
-                    <Check size={13} className="text-emerald-500" /> Copied
-                  </>
+                  <><Check size={13} className="text-emerald-500" /> Copied</>
                 ) : (
-                  <>
-                    <Copy size={13} /> Copy
-                  </>
+                  <><Copy size={13} /> Copy</>
                 )}
               </Button>
               {!saved && (
-                <Button
-                  size="sm"
-                  className="h-7 gap-1"
-                  onClick={handleSave}
-                  loading={saving}
-                >
+                <Button size="sm" className="h-7 gap-1" onClick={handleSave} loading={saving}>
                   <Save size={13} /> Save
                 </Button>
               )}
               {saved && (
-                <span className="text-sm text-emerald-600 font-medium">
-                  ✓ Saved
-                </span>
+                <span className="text-sm text-emerald-600 font-medium">✓ Saved</span>
               )}
             </div>
           </div>
-          <p className="text-sm text-gray-700 leading-relaxed">
-            {generatedResponse}
-          </p>
+          <p className="text-sm text-gray-700 leading-relaxed">{generatedResponse}</p>
         </div>
       )}
     </div>

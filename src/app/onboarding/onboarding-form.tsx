@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -38,31 +37,14 @@ const INDUSTRIES = [
 ];
 
 const TONES: { value: ToneProfile; label: string; description: string }[] = [
-  {
-    value: "professional",
-    label: "Professional",
-    description: "Formal, polished, and authoritative",
-  },
-  {
-    value: "friendly",
-    label: "Friendly",
-    description: "Warm, approachable, and conversational",
-  },
-  {
-    value: "apologetic",
-    label: "Apologetic",
-    description: "Empathetic, understanding, and solution-focused",
-  },
-  {
-    value: "bold",
-    label: "Bold",
-    description: "Confident, direct, and memorable",
-  },
+  { value: "professional", label: "Professional", description: "Formal, polished, and authoritative" },
+  { value: "friendly", label: "Friendly", description: "Warm, approachable, and conversational" },
+  { value: "apologetic", label: "Apologetic", description: "Empathetic, understanding, and solution-focused" },
+  { value: "bold", label: "Bold", description: "Confident, direct, and memorable" },
 ];
 
 export function OnboardingForm({ userId }: { userId: string }) {
   const router = useRouter();
-  const supabase = createClient();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -81,16 +63,15 @@ export function OnboardingForm({ userId }: { userId: string }) {
   const onSubmit = async (data: FormData) => {
     setServerError(null);
 
-    const { error } = await supabase.from("businesses").insert({
-      user_id: userId,
-      name: data.name,
-      industry: data.industry,
-      location: data.location,
-      tone: data.tone,
+    const res = await fetch("/api/business", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, ...data }),
     });
 
-    if (error) {
-      setServerError(error.message);
+    if (!res.ok) {
+      const body = await res.json();
+      setServerError(body.error ?? "Something went wrong");
       return;
     }
 
@@ -153,18 +134,11 @@ export function OnboardingForm({ userId }: { userId: string }) {
                   : "border-gray-200 hover:border-gray-300"
               )}
             >
-              <div className="font-semibold text-sm text-gray-900">
-                {tone.label}
-              </div>
-              <div className="text-xs text-gray-500 mt-0.5">
-                {tone.description}
-              </div>
+              <div className="font-semibold text-sm text-gray-900">{tone.label}</div>
+              <div className="text-xs text-gray-500 mt-0.5">{tone.description}</div>
             </button>
           ))}
         </div>
-        {errors.tone && (
-          <p className="text-xs text-red-600 mt-1">{errors.tone.message}</p>
-        )}
       </div>
 
       {serverError && (

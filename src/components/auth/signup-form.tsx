@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -23,7 +23,6 @@ type FormData = z.infer<typeof schema>;
 
 export function SignupForm() {
   const router = useRouter();
-  const supabase = createClient();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -35,16 +34,32 @@ export function SignupForm() {
   const onSubmit = async (data: FormData) => {
     setServerError(null);
 
-    const { error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: { full_name: data.full_name },
-      },
+    // Register the user
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: data.full_name,
+        email: data.email,
+        password: data.password,
+      }),
     });
 
-    if (error) {
-      setServerError(error.message);
+    if (!res.ok) {
+      const body = await res.json();
+      setServerError(body.error ?? "Something went wrong");
+      return;
+    }
+
+    // Auto sign in after registration
+    const result = await signIn("credentials", {
+      email: data.email,
+      password: data.password,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      setServerError("Account created but sign in failed. Please log in.");
       return;
     }
 

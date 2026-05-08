@@ -1,27 +1,16 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
-import { createServerClient } from "@/lib/supabase/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getSubscriptionByUserId } from "@/lib/db";
 import { BillingContent } from "./billing-content";
-import type { Database } from "@/types/database";
-
-type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"];
 
 export default async function BillingPage() {
-  const supabase = createServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await getServerSession(authOptions);
+  if (!session?.user) redirect("/login");
 
-  if (!session) redirect("/login");
-
-  const { data: subscriptionRaw } = await supabase
-    .from("subscriptions")
-    .select("*")
-    .eq("user_id", session.user.id)
-    .single();
-
-  const subscription = subscriptionRaw as Subscription | null;
+  const subscription = await getSubscriptionByUserId(session.user.id);
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -32,7 +21,10 @@ export default async function BillingPage() {
         </p>
       </div>
 
-      <BillingContent subscription={subscription} userEmail={session.user.email ?? ""} />
+      <BillingContent
+        subscription={subscription}
+        userEmail={session.user.email ?? ""}
+      />
     </div>
   );
 }

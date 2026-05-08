@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
   MessageSquare,
@@ -29,15 +29,7 @@ interface MobileNavProps {
 
 export function MobileNav({ businessName }: MobileNavProps) {
   const pathname = usePathname();
-  const router = useRouter();
-  const supabase = createClient();
   const [open, setOpen] = useState(false);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
-  };
 
   return (
     <div className="md:hidden">
@@ -80,7 +72,7 @@ export function MobileNav({ businessName }: MobileNavProps) {
             );
           })}
           <button
-            onClick={handleSignOut}
+            onClick={() => signOut({ callbackUrl: "/" })}
             className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
           >
             <LogOut size={16} />

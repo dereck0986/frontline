@@ -5,15 +5,13 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { Database, ToneProfile } from "@/types/database";
-
-type Business = Database["public"]["Tables"]["businesses"]["Row"];
+import type { Business } from "@/lib/db";
+import type { ToneProfile } from "@/types/database";
 
 const schema = z.object({
   name: z.string().min(2),
@@ -47,7 +45,6 @@ const TONES: { value: ToneProfile; label: string; description: string }[] = [
 
 export function SettingsForm({ business }: { business: Business }) {
   const router = useRouter();
-  const supabase = createClient();
   const [success, setSuccess] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -73,13 +70,15 @@ export function SettingsForm({ business }: { business: Business }) {
     setServerError(null);
     setSuccess(false);
 
-    const { error } = await supabase
-      .from("businesses")
-      .update(data)
-      .eq("id", business.id);
+    const res = await fetch("/api/business", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: business.id, ...data }),
+    });
 
-    if (error) {
-      setServerError(error.message);
+    if (!res.ok) {
+      const body = await res.json();
+      setServerError(body.error ?? "Failed to save settings");
       return;
     }
 
@@ -145,7 +144,6 @@ export function SettingsForm({ business }: { business: Business }) {
           Settings saved successfully.
         </p>
       )}
-
       {serverError && (
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
           {serverError}

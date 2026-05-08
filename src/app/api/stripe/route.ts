@@ -1,7 +1,8 @@
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { stripe, PLANS } from "@/lib/stripe";
+import { getSubscriptionByUserId, upsertSubscription } from "@/lib/db";
 import { z } from "zod";
 
 const schema = z.object({
@@ -10,13 +11,8 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies });
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -30,37 +26,25 @@ export async function POST(req: NextRequest) {
   const plan = PLANS[body.plan];
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-  // Get or create Stripe customer
-  const { data: subscription } = await supabase
-    .from("subscriptions")
-    .select("stripe_customer_id")
-    .eq("user_id", session.user.id)
-    .single();
-
+  const subscription = await getSubscriptionByUserId(session.user.id);
   let customerId = subscription?.stripe_customer_id;
 
   if (!customerId) {
     const customer = await stripe.customers.create({
       email: body.email,
-      metadata: { supabase_user_id: session.user.id },
+      metadata: { user_id: session.user.id },
     });
     customerId = customer.id;
 
-    await supabase
-      .from("subscriptions")
-      .update({ stripe_customer_id: customerId })
-      .eq("user_id", session.user.id);
+    await upsertSubscription(session.user.id, {
+      stripe_customer_id: customerId,
+    });
   }
 
   const checkoutSession = await stripe.checkout.sessions.create({
     customer: customerId,
     payment_method_types: ["card"],
-    line_items: [
-      {
-        price: plan.priceId,
-        quantity: 1,
-      },
-    ],
+    line_items: [{ price: plan.priceId, quantity: 1 }],
     mode: "subscription",
     success_url: `${appUrl}/dashboard/billing?success=true`,
     cancel_url: `${appUrl}/dashboard/billing`,

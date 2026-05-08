@@ -6,9 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatRelativeDate } from "@/lib/utils";
-import type { Database, ReviewStatus } from "@/types/database";
-
-type Review = Database["public"]["Tables"]["reviews"]["Row"];
+import type { Review } from "@/lib/db";
+import type { ReviewStatus } from "@/types/database";
 
 const STATUS_VARIANT: Record<ReviewStatus, "default" | "warning" | "success" | "error" | "info"> = {
   pending: "warning",

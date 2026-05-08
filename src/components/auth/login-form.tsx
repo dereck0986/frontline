@@ -6,20 +6,19 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const schema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(1, "Password is required"),
 });
 
 type FormData = z.infer<typeof schema>;
 
 export function LoginForm() {
   const router = useRouter();
-  const supabase = createClient();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -30,10 +29,15 @@ export function LoginForm() {
 
   const onSubmit = async (data: FormData) => {
     setServerError(null);
-    const { error } = await supabase.auth.signInWithPassword(data);
 
-    if (error) {
-      setServerError(error.message);
+    const result = await signIn("credentials", {
+      email: data.email,
+      password: data.password,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      setServerError("Invalid email or password");
       return;
     }
 
