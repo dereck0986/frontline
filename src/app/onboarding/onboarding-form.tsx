@@ -1,25 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useFormStatus } from "react-dom";
+import { createBusinessAction } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Building2, MapPin, Briefcase, MessageSquare } from "lucide-react";
 import type { ToneProfile } from "@/types/database";
-
-const schema = z.object({
-  name: z.string().min(2, "Business name must be at least 2 characters"),
-  industry: z.string().min(1, "Please select an industry"),
-  location: z.string().min(2, "Location must be at least 2 characters"),
-  tone: z.enum(["professional", "friendly", "apologetic", "bold"]),
-});
-
-type FormData = z.infer<typeof schema>;
 
 const INDUSTRIES = [
   { value: "", label: "Select an industry" },
@@ -43,63 +32,38 @@ const TONES: { value: ToneProfile; label: string; description: string }[] = [
   { value: "bold", label: "Bold", description: "Confident, direct, and memorable" },
 ];
 
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" loading={pending} className="w-full" size="lg">
+      Complete Setup
+    </Button>
+  );
+}
+
 export function OnboardingForm({ userId }: { userId: string }) {
-  const router = useRouter();
-  const [serverError, setServerError] = useState<string | null>(null);
-
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: { tone: "professional" },
-  });
-
-  const selectedTone = watch("tone");
-
-  const onSubmit = async (data: FormData) => {
-    setServerError(null);
-
-    const res = await fetch("/api/business", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, ...data }),
-    });
-
-    if (!res.ok) {
-      const body = await res.json();
-      setServerError(body.error ?? "Something went wrong");
-      return;
-    }
-
-    router.push("/dashboard");
-    router.refresh();
-  };
+  const [selectedTone, setSelectedTone] = useState<ToneProfile>("professional");
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="flex items-center gap-3 mb-2">
-        <Building2 size={18} className="text-brand-600" />
-        <Input
-          id="name"
-          label="Business Name"
-          placeholder="Acme Coffee Co."
-          error={errors.name?.message}
-          {...register("name")}
-        />
+    <form action={createBusinessAction} className="space-y-6">
+      {/* Hidden userId */}
+      <input type="hidden" name="userId" value={userId} />
+      {/* Hidden tone — updated by button clicks */}
+      <input type="hidden" name="tone" value={selectedTone} />
+
+      <div className="flex items-center gap-3">
+        <Building2 size={18} className="text-brand-600 shrink-0" />
+        <Input id="name" name="name" label="Business Name" placeholder="Acme Coffee Co." required />
       </div>
 
       <div className="flex items-center gap-3">
         <Briefcase size={18} className="text-brand-600 shrink-0 mt-6" />
         <Select
           id="industry"
+          name="industry"
           label="Industry"
           options={INDUSTRIES}
-          error={errors.industry?.message}
-          {...register("industry")}
+          required
         />
       </div>
 
@@ -107,10 +71,10 @@ export function OnboardingForm({ userId }: { userId: string }) {
         <MapPin size={18} className="text-brand-600 shrink-0 mt-6" />
         <Input
           id="location"
+          name="location"
           label="Location (City, State)"
           placeholder="Austin, TX"
-          error={errors.location?.message}
-          {...register("location")}
+          required
         />
       </div>
 
@@ -126,7 +90,7 @@ export function OnboardingForm({ userId }: { userId: string }) {
             <button
               key={tone.value}
               type="button"
-              onClick={() => setValue("tone", tone.value)}
+              onClick={() => setSelectedTone(tone.value)}
               className={cn(
                 "p-4 rounded-xl border-2 text-left transition-all",
                 selectedTone === tone.value
@@ -141,15 +105,7 @@ export function OnboardingForm({ userId }: { userId: string }) {
         </div>
       </div>
 
-      {serverError && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-          {serverError}
-        </p>
-      )}
-
-      <Button type="submit" loading={isSubmitting} className="w-full" size="lg">
-        Complete Setup
-      </Button>
+      <SubmitButton />
     </form>
   );
 }
