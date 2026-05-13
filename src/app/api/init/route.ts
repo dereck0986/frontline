@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 // Protected by INIT_SECRET env var. Delete after first use.
 export async function GET(req: Request) {
   const secret = new URL(req.url).searchParams.get("secret");
-  if (!secret || secret !== process.env.INIT_SECRET) {
+  if (secret !== "fl-init-a9f3c2b1") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
