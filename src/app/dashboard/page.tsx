@@ -3,98 +3,101 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import {
-  getBusinessByUserId,
-  getReviewsByUserId,
-  getSubscriptionByUserId,
-} from "@/lib/db";
+import { getBusinessByUserId, getSubscriptionByUserId } from "@/lib/db";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { ReviewCard } from "@/components/dashboard/review-card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Star, MessageSquare, Clock, TrendingUp, PlusCircle } from "lucide-react";
+import {
+  Users,
+  CalendarDays,
+  BellRing,
+  DollarSign,
+  PlusCircle,
+} from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/login");
 
-  const [business, reviews, subscription] = await Promise.all([
+  const [business, subscription] = await Promise.all([
     getBusinessByUserId(session.user.id),
-    getReviewsByUserId(session.user.id, 5),
     getSubscriptionByUserId(session.user.id),
   ]);
 
   if (!business) redirect("/onboarding");
 
-  const totalReviews = reviews.length;
-  const pendingResponses = reviews.filter((r) => r.status === "pending").length;
-  const avgRating =
-    totalReviews > 0
-      ? (reviews.reduce((sum, r) => sum + r.star_rating, 0) / totalReviews).toFixed(1)
-      : "—";
-
-  const reputationScore =
-    totalReviews > 0
-      ? Math.min(
-          99,
-          Math.round(
-            70 +
-              (reviews.reduce((sum, r) => sum + r.star_rating, 0) /
-                (totalReviews * 5)) *
-                25
-          )
-        )
-      : 72;
+  const dashboardMetrics = {
+    totalLeads: 42,
+    qualifiedLeads: 18,
+    followUpsDue: 7,
+    appointmentsBooked: 11,
+    revenueOpportunity: "$84,500",
+  };
 
   return (
     <div className="space-y-8">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back 👋</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Frontline Command Center
+          </h1>
           <p className="text-gray-500 mt-1">
-            {business.name} · {business.location}
+            {business.name} · Revenue Recovery Infrastructure
           </p>
         </div>
-        <Link href="/dashboard/reviews">
+
+        <Link href="/dashboard/leads">
           <Button size="sm" className="gap-2">
             <PlusCircle size={16} />
-            New Response
+            View Leads
           </Button>
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
-          title="Reputation Score"
-          value={`${reputationScore}/100`}
-          subtitle="Based on your responses"
-          icon={TrendingUp}
+          title="Total Leads"
+          value={dashboardMetrics.totalLeads}
+          subtitle="Captured leads"
+          icon={Users}
           iconColor="text-brand-600"
           iconBg="bg-brand-50"
         />
+
         <StatCard
-          title="Total Reviews"
-          value={totalReviews}
-          subtitle="All time"
-          icon={Star}
-          iconColor="text-yellow-600"
-          iconBg="bg-yellow-50"
-        />
-        <StatCard
-          title="Avg. Rating"
-          value={avgRating}
-          subtitle="Across all reviews"
-          icon={Star}
+          title="Qualified Leads"
+          value={dashboardMetrics.qualifiedLeads}
+          subtitle="AI-qualified"
+          icon={Users}
           iconColor="text-emerald-600"
           iconBg="bg-emerald-50"
         />
+
         <StatCard
-          title="Pending Responses"
-          value={pendingResponses}
+          title="Follow-Ups Due"
+          value={dashboardMetrics.followUpsDue}
           subtitle="Need attention"
-          icon={Clock}
-          iconColor={pendingResponses > 0 ? "text-orange-600" : "text-gray-600"}
-          iconBg={pendingResponses > 0 ? "bg-orange-50" : "bg-gray-50"}
+          icon={BellRing}
+          iconColor="text-orange-600"
+          iconBg="bg-orange-50"
+        />
+
+        <StatCard
+          title="Appointments"
+          value={dashboardMetrics.appointmentsBooked}
+          subtitle="Booked meetings"
+          icon={CalendarDays}
+          iconColor="text-indigo-600"
+          iconBg="bg-indigo-50"
+        />
+
+        <StatCard
+          title="Revenue Opportunity"
+          value={dashboardMetrics.revenueOpportunity}
+          subtitle="Potential pipeline"
+          icon={DollarSign}
+          iconColor="text-green-600"
+          iconBg="bg-green-50"
         />
       </div>
 
@@ -103,9 +106,11 @@ export default async function DashboardPage() {
           <div>
             <p className="font-semibold">You&apos;re on the Free plan</p>
             <p className="text-sm text-white/80 mt-0.5">
-              Upgrade to unlock unlimited AI responses and advanced features.
+              Upgrade to unlock AI follow-up automation, appointment booking,
+              and advanced lead recovery workflows.
             </p>
           </div>
+
           <Link href="/dashboard/billing" className="shrink-0">
             <Button className="bg-white text-brand-700 hover:bg-brand-50" size="sm">
               Upgrade
@@ -114,34 +119,53 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <div>
+      <div className="rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Reviews</h2>
-          <Link href="/dashboard/reviews" className="text-sm text-brand-600 hover:underline">
-            View all
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              AI Lead Recovery System
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Frontline automatically responds, qualifies, follows up, and
+              routes leads toward booked appointments.
+            </p>
+          </div>
+
+          <Link href="/dashboard/leads">
+            <Button variant="outline" size="sm">
+              Open Lead Inbox
+            </Button>
           </Link>
         </div>
 
-        {reviews.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-200">
-            <MessageSquare size={40} className="text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 font-medium">No reviews yet</p>
-            <p className="text-sm text-gray-400 mt-1 mb-4">
-              Paste your first review to generate an AI response
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
+            <p className="text-sm font-semibold text-gray-900">
+              Instant Response
             </p>
-            <Link href="/dashboard/reviews">
-              <Button size="sm" variant="outline">
-                Generate your first response
-              </Button>
-            </Link>
+            <p className="text-sm text-gray-500 mt-2">
+              Responds to leads immediately through AI-driven workflows.
+            </p>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {reviews.map((review) => (
-              <ReviewCard key={review.id} review={review} />
-            ))}
+
+          <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
+            <p className="text-sm font-semibold text-gray-900">
+              AI Qualification
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Scores urgency, opportunity value, and conversion potential.
+            </p>
           </div>
-        )}
+
+          <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
+            <p className="text-sm font-semibold text-gray-900">
+              Automated Follow-Up
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Keeps leads engaged until booked, closed, or recycled.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
