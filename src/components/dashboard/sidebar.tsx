@@ -6,7 +6,11 @@ import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  MessageSquare,
+  Users,
+  ClipboardPlus,
+  MessagesSquare,
+  Workflow,
+  FileText,
   Settings,
   CreditCard,
   LogOut,
@@ -14,7 +18,11 @@ import {
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/reviews", label: "Reviews", icon: MessageSquare, exact: false },
+  { href: "/dashboard/leads", label: "Leads", icon: Users, exact: false },
+  { href: "/dashboard/lead-intake", label: "Lead Intake", icon: ClipboardPlus, exact: false },
+  { href: "/dashboard/conversations", label: "Conversations", icon: MessagesSquare, exact: false },
+  { href: "/dashboard/automations", label: "Automations", icon: Workflow, exact: false },
+  { href: "/dashboard/templates", label: "Templates", icon: FileText, exact: false },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard, exact: false },
   { href: "/dashboard/settings", label: "Settings", icon: Settings, exact: false },
 ];
