@@ -1,167 +1,101 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PLANS } from "@/lib/stripe";
-import { Check, CreditCard, AlertCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Check, AlertCircle } from "lucide-react";
 import type { Subscription } from "@/lib/db";
-
-const PLAN_ORDER = ["free", "starter", "pro"] as const;
 
 interface BillingContentProps {
   subscription: Subscription | null;
   userEmail: string;
 }
 
+const plans = [
+  {
+    name: "Starter",
+    price: "$500/mo",
+    badge: "Launch offer",
+    description: "Manual-Assisted AI lead recovery for first clients.",
+    features: ["AI lead qualification", "Lead scoring", "Copy-ready SMS scripts", "Copy-ready email replies", "Call openers", "Manual follow-up workflow"],
+  },
+  {
+    name: "Pro",
+    price: "$1,000/mo",
+    badge: "Automation upgrade",
+    description: "Twilio-powered SMS and call automation upgrade.",
+    features: ["Everything in Starter", "Twilio SMS automation", "Missed-call recovery", "Owner alerts", "Automated follow-up sequences", "Higher lead volume"],
+  },
+  {
+    name: "Premium",
+    price: "$1,500-$2,500/mo",
+    badge: "Done-for-you",
+    description: "Premium setup with voice automation and custom workflows.",
+    features: ["Everything in Pro", "VAPI voice workflows", "Done-for-you setup", "Custom scripts", "Workflow customization", "Priority support"],
+  },
+];
+
 export function BillingContent({ subscription, userEmail }: BillingContentProps) {
-  const [loading, setLoading] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
   const currentPlan = subscription?.plan ?? "free";
-
-  const handleUpgrade = async (plan: "starter" | "pro") => {
-    setError(null);
-    setLoading(plan);
-
-    try {
-      const res = await fetch("/api/stripe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, email: userEmail }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error ?? "Failed to start checkout");
-      }
-
-      const { url } = await res.json();
-      window.location.href = url;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-      setLoading(null);
-    }
-  };
-
-  const handleManageBilling = async () => {
-    setError(null);
-    setLoading("manage");
-
-    try {
-      const res = await fetch("/api/stripe/portal", { method: "POST" });
-
-      if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error ?? "Failed to open portal");
-      }
-
-      const { url } = await res.json();
-      window.location.href = url;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-      setLoading(null);
-    }
-  };
 
   return (
     <div className="space-y-6">
       <Card>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-base font-semibold text-gray-900 mb-1">Current Plan</h2>
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-gray-900 capitalize">
-                {currentPlan}
-              </span>
-              <Badge variant={subscription?.status === "active" ? "success" : "warning"}>
-                {subscription?.status ?? "active"}
-              </Badge>
+              <span className="text-2xl font-bold text-gray-900 capitalize">{currentPlan}</span>
+              <Badge variant={subscription?.status === "active" ? "success" : "warning"}>{subscription?.status ?? "active"}</Badge>
             </div>
-            {subscription?.current_period_end && (
-              <p className="text-sm text-gray-500 mt-1">
-                Renews{" "}
-                {new Date(subscription.current_period_end).toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </p>
-            )}
+            <p className="text-sm text-gray-500 mt-2">Billing contact: {userEmail}</p>
           </div>
-          {currentPlan !== "free" && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleManageBilling}
-              loading={loading === "manage"}
-              className="gap-2"
-            >
-              <CreditCard size={14} />
-              Manage billing
-            </Button>
-          )}
+          <Badge variant="info">Manual-Assisted Mode</Badge>
         </div>
       </Card>
 
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
+        <p className="text-sm font-semibold text-emerald-800">Launch Mode: Manual-Assisted AI</p>
+        <p className="mt-1 text-sm text-emerald-700">
+          Starter customers get AI qualification, scripts, and clear next actions without paid phone automation. Automation becomes the Pro upgrade after revenue validates demand.
+        </p>
+      </div>
+
       <div>
         <h2 className="text-base font-semibold text-gray-900 mb-4">Available Plans</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {(["starter", "pro"] as const).map((planKey) => {
-            const plan = PLANS[planKey];
-            const isCurrent = currentPlan === planKey;
-            const isDowngrade =
-              PLAN_ORDER.indexOf(currentPlan) > PLAN_ORDER.indexOf(planKey);
-
-            return (
-              <div
-                key={planKey}
-                className={cn(
-                  "rounded-xl border p-6",
-                  isCurrent ? "border-brand-600 bg-brand-50" : "border-gray-200 bg-white"
-                )}
-              >
-                <div className="flex items-center justify-between mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {plans.map((plan) => (
+            <div key={plan.name} className="rounded-xl border border-gray-200 bg-white p-6">
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div>
                   <h3 className="font-bold text-gray-900">{plan.name}</h3>
-                  {isCurrent && <Badge variant="info">Current plan</Badge>}
+                  <p className="mt-1 text-sm text-gray-500">{plan.description}</p>
                 </div>
-                <div className="mb-5">
-                  <span className="text-3xl font-extrabold text-gray-900">
-                    ${plan.price}
-                  </span>
-                  <span className="text-gray-500">/mo</span>
-                </div>
-                <ul className="space-y-2 mb-6">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
-                      <Check size={14} className="text-brand-600 shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  variant={isCurrent ? "secondary" : "primary"}
-                  className="w-full"
-                  disabled={isCurrent}
-                  loading={loading === planKey}
-                  onClick={() => handleUpgrade(planKey)}
-                >
-                  {isCurrent ? "Current plan" : isDowngrade ? "Downgrade" : "Upgrade"}
-                </Button>
+                <Badge variant="info">{plan.badge}</Badge>
               </div>
-            );
-          })}
+              <div className="mb-5">
+                <span className="text-3xl font-extrabold text-gray-900">{plan.price}</span>
+              </div>
+              <ul className="space-y-2 mb-6">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-center gap-2 text-sm text-gray-600">
+                    <Check size={14} className="text-brand-600 shrink-0" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Button className="w-full" variant={plan.name === "Starter" ? "primary" : "outline"}>
+                {plan.name === "Starter" ? "Start Manual AI" : "Request Upgrade"}
+              </Button>
+            </div>
+          ))}
         </div>
       </div>
 
-      {error && (
-        <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-          <AlertCircle size={16} />
-          {error}
-        </div>
-      )}
+      <div className="flex items-start gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        <AlertCircle size={16} className="mt-0.5 shrink-0" />
+        Payment checkout can be connected after offer validation. For first clients, use a simple invoice or payment link.
+      </div>
     </div>
   );
 }
