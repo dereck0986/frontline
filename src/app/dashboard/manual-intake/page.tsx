@@ -4,6 +4,18 @@ import { useState } from "react";
 
 const STORAGE_KEY = "frontline_demo_qualified_leads";
 
+type QualificationResult = {
+  summary: string;
+  score: number;
+  priority: string;
+  suggested_next_action: string;
+};
+
+type SavedLeadResult = {
+  fullName: string;
+  qualification: QualificationResult;
+};
+
 const industryOptions = [
   { value: "real_estate", label: "Real Estate" },
   { value: "rentals", label: "Rentals" },
@@ -28,7 +40,7 @@ export default function ManualIntakePage() {
     message: "",
   });
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<SavedLeadResult | null>(null);
   const [error, setError] = useState("");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -86,90 +98,48 @@ export default function ManualIntakePage() {
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-2 text-sm font-medium text-slate-700">
             Lead Name
-            <input
-              required
-              value={form.fullName}
-              onChange={(event) => setForm({ ...form, fullName: event.target.value })}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              placeholder="Ian Vaugh"
-            />
+            <input required value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500" placeholder="Ian Vaugh" />
           </label>
 
           <label className="space-y-2 text-sm font-medium text-slate-700">
             Phone
-            <input
-              value={form.phone}
-              onChange={(event) => setForm({ ...form, phone: event.target.value })}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              placeholder="(555) 555-5555"
-            />
+            <input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500" placeholder="(555) 555-5555" />
           </label>
 
           <label className="space-y-2 text-sm font-medium text-slate-700">
             Email
-            <input
-              value={form.email}
-              onChange={(event) => setForm({ ...form, email: event.target.value })}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              placeholder="lead@example.com"
-            />
+            <input value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500" placeholder="lead@example.com" />
           </label>
 
           <label className="space-y-2 text-sm font-medium text-slate-700">
             Industry
-            <select
-              value={form.industry}
-              onChange={(event) => setForm({ ...form, industry: event.target.value })}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-            >
+            <select value={form.industry} onChange={(event) => setForm({ ...form, industry: event.target.value })} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500">
               {industryOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
+                <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
           </label>
 
           <label className="space-y-2 text-sm font-medium text-slate-700">
             Source
-            <input
-              value={form.source}
-              onChange={(event) => setForm({ ...form, source: event.target.value })}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              placeholder="manual, missed call, DM, form"
-            />
+            <input value={form.source} onChange={(event) => setForm({ ...form, source: event.target.value })} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500" placeholder="manual, missed call, DM, form" />
           </label>
 
           <label className="space-y-2 text-sm font-medium text-slate-700">
             Estimated Value
-            <input
-              type="number"
-              value={form.estimatedValue}
-              onChange={(event) => setForm({ ...form, estimatedValue: event.target.value })}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              placeholder="5500"
-            />
+            <input type="number" value={form.estimatedValue} onChange={(event) => setForm({ ...form, estimatedValue: event.target.value })} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500" placeholder="5500" />
           </label>
         </div>
 
         <label className="space-y-2 text-sm font-medium text-slate-700">
           Lead Request / Customer Message
-          <textarea
-            required
-            value={form.message}
-            onChange={(event) => setForm({ ...form, message: event.target.value })}
-            className="min-h-36 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-            placeholder="Example: Customer called asking to rent the property at 21 Kwann St and wants to know the next steps."
-          />
+          <textarea required value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} className="min-h-36 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500" placeholder="Example: Customer called asking to rent the property at 21 Kwann St and wants to know the next steps." />
           <span className="block text-xs text-slate-500">
             Paste what the lead said — form submission, text, DM, voicemail summary, missed-call notes, or rough notes from a conversation.
           </span>
         </label>
 
-        <button
-          disabled={loading}
-          className="w-full rounded-2xl bg-slate-950 px-5 py-3 font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 md:w-auto"
-        >
+        <button disabled={loading} className="w-full rounded-2xl bg-slate-950 px-5 py-3 font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 md:w-auto">
           {loading ? "Qualifying lead..." : "Qualify Lead"}
         </button>
       </form>
