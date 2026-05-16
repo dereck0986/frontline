@@ -15,6 +15,24 @@ export type LeadQualificationResult = {
   questions_to_ask: string[];
 };
 
+const RENTAL_INTENT_WORDS = [
+  "rent",
+  "renting",
+  "rental",
+  "lease",
+  "move in",
+  "move-in",
+  "apartment",
+  "unit",
+  "tenant",
+];
+
+const RENTAL_QUESTIONS = [
+  "When are you looking to move in?",
+  "How many occupants will live there?",
+  "Do you have pets or any special requirements?",
+];
+
 export const INDUSTRY_QUESTIONS: Record<Industry, string[]> = {
   real_estate: [
     "Are you buying, selling, or renting?",
@@ -48,8 +66,64 @@ export const INDUSTRY_QUESTIONS: Record<Industry, string[]> = {
   ],
 };
 
+function hasRentalIntent(message: string) {
+  const text = message.toLowerCase();
+  return RENTAL_INTENT_WORDS.some((word) => text.includes(word));
+}
+
+function getQuestionsForInput(input: LeadQualificationInput) {
+  if ((input.industry === "real_estate" || input.industry === "rentals") && hasRentalIntent(input.message)) {
+    return RENTAL_QUESTIONS;
+  }
+
+  return INDUSTRY_QUESTIONS[input.industry].slice(0, 3);
+}
+
+function buildContextSummary(input: LeadQualificationInput) {
+  const text = input.message.trim();
+  const shortMessage = text.length > 150 ? `${text.slice(0, 147)}...` : text;
+
+  if ((input.industry === "real_estate" || input.industry === "rentals") && hasRentalIntent(input.message)) {
+    return `Lead is interested in renting or leasing. Message: "${shortMessage}"`;
+  }
+
+  if (input.industry === "security") {
+    return `Security lead received. Message: "${shortMessage}"`;
+  }
+
+  if (input.industry === "contractors") {
+    return `Contractor/service lead received. Message: "${shortMessage}"`;
+  }
+
+  if (input.industry === "med_spas") {
+    return `Med spa lead received. Message: "${shortMessage}"`;
+  }
+
+  return `Lead received. Message: "${shortMessage}"`;
+}
+
+function buildNextAction(input: LeadQualificationInput) {
+  if ((input.industry === "real_estate" || input.industry === "rentals") && hasRentalIntent(input.message)) {
+    return "Follow up immediately to confirm move-in timeline, occupants, budget, and showing availability.";
+  }
+
+  if (input.industry === "security") {
+    return "Confirm coverage location, guard type, number of guards, and required shifts before sending pricing or booking a call.";
+  }
+
+  if (input.industry === "contractors") {
+    return "Confirm project type, urgency, location, budget range, and schedule an estimate if the lead is qualified.";
+  }
+
+  if (input.industry === "med_spas") {
+    return "Confirm treatment interest, timing, prior experience, and move toward booking a consultation.";
+  }
+
+  return "Ask the strongest next qualification question and move toward booking an appointment.";
+}
+
 export function buildQualificationPrompt(input: LeadQualificationInput) {
-  const questions = INDUSTRY_QUESTIONS[input.industry];
+  const questions = getQuestionsForInput(input);
 
   return `You are Frontline, an AI lead follow-up assistant for service businesses.
 
@@ -68,7 +142,7 @@ Lead Message:
 ${input.message}
 """
 
-Qualification questions for this industry:
+Qualification questions for this lead:
 ${questions.map((question, index) => `${index + 1}. ${question}`).join("\n")}
 
 Return a JSON object only with this exact shape:
@@ -85,7 +159,7 @@ Return a JSON object only with this exact shape:
 export function fallbackQualification(input: LeadQualificationInput): LeadQualificationResult {
   const text = input.message.toLowerCase();
   const urgentWords = ["urgent", "asap", "today", "immediately", "emergency", "now"];
-  const valueWords = ["cash", "ready", "approved", "book", "schedule", "hire", "quote"];
+  const valueWords = ["cash", "ready", "approved", "book", "schedule", "hire", "quote", "rent", "lease", "move in"];
 
   const urgencyBoost = urgentWords.some((word) => text.includes(word)) ? 30 : 0;
   const valueBoost = valueWords.some((word) => text.includes(word)) ? 20 : 0;
@@ -97,9 +171,9 @@ export function fallbackQualification(input: LeadQualificationInput): LeadQualif
   return {
     score,
     priority,
-    summary: "Lead received and ready for qualification follow-up.",
-    suggested_next_action: "Ask the next qualification question and move toward booking an appointment.",
+    summary: buildContextSummary(input),
+    suggested_next_action: buildNextAction(input),
     needs_human_attention: priority === "urgent",
-    questions_to_ask: INDUSTRY_QUESTIONS[input.industry].slice(0, 3),
+    questions_to_ask: getQuestionsForInput(input),
   };
 }
