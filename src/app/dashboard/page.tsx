@@ -36,9 +36,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
             Frontline Command Center
           </h1>
           <p className="text-gray-500 mt-1">
@@ -46,8 +46,8 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        <Link href="/dashboard/leads">
-          <Button size="sm" className="gap-2">
+        <Link href="/dashboard/lead-records" className="w-full sm:w-auto">
+          <Button size="sm" className="w-full sm:w-auto gap-2 whitespace-nowrap">
             <PlusCircle size={16} />
             View Leads
           </Button>
@@ -55,84 +55,43 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard
-          title="Total Leads"
-          value={dashboardMetrics.totalLeads}
-          subtitle="Captured leads"
-          icon={Users}
-          iconColor="text-brand-600"
-          iconBg="bg-brand-50"
-        />
-
-        <StatCard
-          title="Qualified Leads"
-          value={dashboardMetrics.qualifiedLeads}
-          subtitle="AI-qualified"
-          icon={Users}
-          iconColor="text-emerald-600"
-          iconBg="bg-emerald-50"
-        />
-
-        <StatCard
-          title="Follow-Ups Due"
-          value={dashboardMetrics.followUpsDue}
-          subtitle="Need attention"
-          icon={BellRing}
-          iconColor="text-orange-600"
-          iconBg="bg-orange-50"
-        />
-
-        <StatCard
-          title="Appointments"
-          value={dashboardMetrics.appointmentsBooked}
-          subtitle="Booked meetings"
-          icon={CalendarDays}
-          iconColor="text-indigo-600"
-          iconBg="bg-indigo-50"
-        />
-
-        <StatCard
-          title="Revenue Opportunity"
-          value={dashboardMetrics.revenueOpportunity}
-          subtitle="Potential pipeline"
-          icon={DollarSign}
-          iconColor="text-green-600"
-          iconBg="bg-green-50"
-        />
+        <StatCard title="Total Leads" value={dashboardMetrics.totalLeads} subtitle="Captured leads" icon={Users} iconColor="text-brand-600" iconBg="bg-brand-50" />
+        <StatCard title="Qualified Leads" value={dashboardMetrics.qualifiedLeads} subtitle="AI-qualified" icon={Users} iconColor="text-emerald-600" iconBg="bg-emerald-50" />
+        <StatCard title="Follow-Ups Due" value={dashboardMetrics.followUpsDue} subtitle="Need attention" icon={BellRing} iconColor="text-orange-600" iconBg="bg-orange-50" />
+        <StatCard title="Appointments" value={dashboardMetrics.appointmentsBooked} subtitle="Booked meetings" icon={CalendarDays} iconColor="text-indigo-600" iconBg="bg-indigo-50" />
+        <StatCard title="Revenue Opportunity" value={dashboardMetrics.revenueOpportunity} subtitle="Potential pipeline" icon={DollarSign} iconColor="text-green-600" iconBg="bg-green-50" />
       </div>
 
       {subscription?.plan === "free" && (
-        <div className="rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 p-5 text-white flex items-center justify-between gap-4">
-          <div>
-            <p className="font-semibold">You&apos;re on the Free plan</p>
-            <p className="text-sm text-white/80 mt-0.5">
-              Upgrade to unlock AI follow-up automation, appointment booking,
-              and advanced lead recovery workflows.
-            </p>
-          </div>
+        <div className="rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 p-5 text-white">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold">You&apos;re on the Free plan</p>
+              <p className="text-sm text-white/80 mt-0.5">
+                Starter is $500/mo. Pro is $1,000/mo. Premium setup is $1,500–$2,500/mo.
+              </p>
+            </div>
 
-          <Link href="/dashboard/billing" className="shrink-0">
-            <Button className="bg-white text-brand-700 hover:bg-brand-50" size="sm">
-              Upgrade
-            </Button>
-          </Link>
+            <Link href="/dashboard/billing" className="w-full sm:w-auto shrink-0">
+              <Button className="w-full sm:w-auto bg-white text-brand-700 hover:bg-brand-50" size="sm">
+                View Pricing
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
 
       <div className="rounded-xl border border-gray-200 bg-white p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
-              AI Lead Recovery System
-            </h2>
+            <h2 className="text-lg font-semibold text-gray-900">AI Lead Recovery System</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Frontline automatically responds, qualifies, follows up, and
-              routes leads toward booked appointments.
+              Frontline automatically responds, qualifies, follows up, and routes leads toward booked appointments.
             </p>
           </div>
 
-          <Link href="/dashboard/leads">
-            <Button variant="outline" size="sm">
+          <Link href="/dashboard/lead-records" className="w-full sm:w-auto shrink-0">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto whitespace-nowrap">
               Open Lead Inbox
             </Button>
           </Link>
@@ -140,30 +99,16 @@ export default async function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
-            <p className="text-sm font-semibold text-gray-900">
-              Instant Response
-            </p>
-            <p className="text-sm text-gray-500 mt-2">
-              Responds to leads immediately through AI-driven workflows.
-            </p>
+            <p className="text-sm font-semibold text-gray-900">Instant Response</p>
+            <p className="text-sm text-gray-500 mt-2">Responds to leads immediately through AI-driven workflows.</p>
           </div>
-
           <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
-            <p className="text-sm font-semibold text-gray-900">
-              AI Qualification
-            </p>
-            <p className="text-sm text-gray-500 mt-2">
-              Scores urgency, opportunity value, and conversion potential.
-            </p>
+            <p className="text-sm font-semibold text-gray-900">AI Qualification</p>
+            <p className="text-sm text-gray-500 mt-2">Scores urgency, opportunity value, and conversion potential.</p>
           </div>
-
           <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
-            <p className="text-sm font-semibold text-gray-900">
-              Automated Follow-Up
-            </p>
-            <p className="text-sm text-gray-500 mt-2">
-              Keeps leads engaged until booked, closed, or recycled.
-            </p>
+            <p className="text-sm font-semibold text-gray-900">Automated Follow-Up</p>
+            <p className="text-sm text-gray-500 mt-2">Keeps leads engaged until booked, closed, or recycled.</p>
           </div>
         </div>
       </div>

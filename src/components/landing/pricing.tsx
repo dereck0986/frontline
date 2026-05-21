@@ -5,32 +5,51 @@ import { Check } from "lucide-react";
 const PLANS = [
   {
     name: "Starter",
-    price: 49,
-    description: "Perfect for single-location businesses",
+    price: "$500",
+    period: "/mo",
+    description: "Manual-Assisted AI lead recovery for first clients.",
     features: [
-      "Up to 100 AI responses/month",
-      "1 business location",
-      "All 4 tone profiles",
-      "Response history & storage",
-      "Email support",
+      "AI lead qualification",
+      "Lead scoring and priority ranking",
+      "Copy-ready SMS scripts",
+      "Copy-ready email replies",
+      "Call openers and follow-up questions",
+      "Manual owner follow-up workflow",
     ],
-    cta: "Start Free Trial",
-    popular: false,
+    cta: "Start Manual AI",
+    popular: true,
   },
   {
     name: "Pro",
-    price: 129,
-    description: "For growing businesses with multiple locations",
+    price: "$1,000",
+    period: "/mo",
+    description: "Twilio-powered SMS and call automation after revenue validation.",
     features: [
-      "Unlimited AI responses",
-      "Up to 5 business locations",
-      "All 4 tone profiles",
-      "Advanced analytics dashboard",
-      "Priority support",
-      "Custom tone training",
+      "Everything in Starter",
+      "Twilio SMS automation",
+      "Missed-call recovery workflows",
+      "Automated owner alerts",
+      "Follow-up sequence automation",
+      "Higher lead volume support",
     ],
-    cta: "Start Free Trial",
-    popular: true,
+    cta: "Request Pro Upgrade",
+    popular: false,
+  },
+  {
+    name: "Premium",
+    price: "$1,500-$2,500",
+    period: "/mo",
+    description: "Voice automation and done-for-you setup for higher-value clients.",
+    features: [
+      "Everything in Pro",
+      "VAPI voice workflows",
+      "Custom lead scripts",
+      "Done-for-you setup",
+      "Workflow customization",
+      "Priority support",
+    ],
+    cta: "Book Premium Setup",
+    popular: false,
   },
 ];
 
@@ -39,67 +58,49 @@ export function Pricing() {
     <section id="pricing" className="py-24 bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Simple, transparent pricing
-          </h2>
-          <p className="text-lg text-gray-500">
-            Start free. Upgrade when you&apos;re ready.
+          <p className="text-sm font-semibold text-brand-600 mb-3">Sales-ready launch pricing</p>
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">Simple pricing for lead recovery</h2>
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+            Start with Manual-Assisted AI. Upgrade to Twilio and voice automation after the system proves revenue.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {PLANS.map((plan) => (
             <div
               key={plan.name}
               className={`relative rounded-2xl border p-8 ${
-                plan.popular
-                  ? "border-brand-600 shadow-lg shadow-brand-100"
-                  : "border-gray-200"
+                plan.popular ? "border-brand-600 shadow-lg shadow-brand-100" : "border-gray-200"
               }`}
             >
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                   <span className="bg-brand-600 text-white text-xs font-semibold px-4 py-1.5 rounded-full">
-                    Most Popular
+                    Launch Offer
                   </span>
                 </div>
               )}
 
               <div className="mb-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">
-                  {plan.name}
-                </h3>
-                <p className="text-sm text-gray-500 mb-6">
-                  {plan.description}
-                </p>
+                <h3 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h3>
+                <p className="text-sm text-gray-500 mb-6">{plan.description}</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-extrabold text-gray-900">
-                    ${plan.price}
-                  </span>
-                  <span className="text-gray-500">/month</span>
+                  <span className="text-4xl font-extrabold text-gray-900">{plan.price}</span>
+                  <span className="text-gray-500">{plan.period}</span>
                 </div>
               </div>
 
               <ul className="space-y-3 mb-8">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-center gap-3 text-sm">
-                    <Check
-                      size={16}
-                      className={
-                        plan.popular ? "text-brand-600" : "text-gray-400"
-                      }
-                    />
+                    <Check size={16} className={plan.popular ? "text-brand-600" : "text-gray-400"} />
                     <span className="text-gray-700">{feature}</span>
                   </li>
                 ))}
               </ul>
 
               <Link href="/signup">
-                <Button
-                  variant={plan.popular ? "primary" : "outline"}
-                  size="lg"
-                  className="w-full"
-                >
+                <Button variant={plan.popular ? "primary" : "outline"} size="lg" className="w-full">
                   {plan.cta}
                 </Button>
               </Link>
@@ -108,7 +109,7 @@ export function Pricing() {
         </div>
 
         <p className="text-center text-sm text-gray-400 mt-8">
-          All plans include a 14-day free trial. No credit card required.
+          Twilio and VAPI are upgrade layers. Starter works without paid phone automation.
         </p>
       </div>
     </section>

@@ -7,7 +7,10 @@ const leadCreateSchema = z.object({
   name: z.string().optional(),
   phone: z.string().optional().default(""),
   email: z.string().optional().default(""),
-  industry: z.enum(["real_estate", "security", "contractors", "med_spas", "rentals"]).optional().default("real_estate"),
+  industry: z
+    .enum(["real_estate", "security", "contractors", "med_spas", "rentals"])
+    .optional()
+    .default("real_estate"),
   source: z.string().optional().default("manual"),
   estimatedValue: z.union([z.string(), z.number()]).optional().default(0),
   message: z.string().optional().default(""),
@@ -17,14 +20,17 @@ const leadCreateSchema = z.object({
 export async function POST(request: Request) {
   try {
     const json = await request.json();
-    const body = leadCreateSchema.parse(json);
-    const leadMessage = body.message || body.notes || "Lead submitted without a message.";
-    const leadName = body.fullName || body.name || "Unknown Lead";
+    const data = leadCreateSchema.parse(json);
+
+    const leadMessage =
+      data.message || data.notes || "Lead submitted without a message.";
+
+    const leadName = data.fullName || data.name || "Unknown Lead";
 
     const qualification = fallbackQualification({
-      industry: body.industry,
+      industry: data.industry,
       message: leadMessage,
-      source: body.source,
+      source: data.source,
     });
 
     return NextResponse.json({
@@ -32,16 +38,23 @@ export async function POST(request: Request) {
       ok: true,
       message: "Lead created and qualified.",
       lead: {
-        id: `lead_${Date.now()}`,
+        id: `LD-${Date.now()}`,
         fullName: leadName,
-        phone: body.phone,
-        email: body.email,
-        industry: body.industry,
-        source: body.source,
-        estimatedValue: Number(body.estimatedValue) || 0,
+        phone: data.phone || null,
+        email: data.email || null,
+        industry: data.industry,
+        source: data.source,
         message: leadMessage,
-        createdAt: new Date().toISOString(),
+        estimatedValue: Number(data.estimatedValue) || null,
+        status: "qualified",
+        priority: qualification.priority,
+        qualificationScore: qualification.score,
+        aiSummary: qualification.summary,
+        suggestedNextAction: qualification.suggested_next_action,
+        needsHumanAttention: qualification.needs_human_attention,
+        questionsToAsk: qualification.questions_to_ask,
         qualification,
+        createdAt: new Date().toISOString(),
       },
       qualification,
     });
@@ -50,9 +63,10 @@ export async function POST(request: Request) {
       {
         success: false,
         ok: false,
-        error: error instanceof Error ? error.message : "Invalid lead creation request",
+        message: "Unable to create lead.",
+        error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 }

@@ -6,7 +6,11 @@ import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  MessageSquare,
+  Users,
+  ClipboardPlus,
+  MessagesSquare,
+  Workflow,
+  FileText,
   Settings,
   CreditCard,
   LogOut,
@@ -17,7 +21,12 @@ import { useState } from "react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/reviews", label: "Reviews", icon: MessageSquare, exact: false },
+  { href: "/dashboard/leads", label: "Leads", icon: Users, exact: false },
+  { href: "/dashboard/intake", label: "Lead Intake", icon: ClipboardPlus, exact: false },
+  { href: "/dashboard/lead-records", label: "Lead Records", icon: Users, exact: false },
+  { href: "/dashboard/conversations", label: "Conversations", icon: MessagesSquare, exact: false },
+  { href: "/dashboard/automations", label: "Automations", icon: Workflow, exact: false },
+  { href: "/dashboard/templates", label: "Templates", icon: FileText, exact: false },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard, exact: false },
   { href: "/dashboard/settings", label: "Settings", icon: Settings, exact: false },
 ];
@@ -34,22 +43,26 @@ export function MobileNav({ businessName }: MobileNavProps) {
   return (
     <div className="md:hidden">
       <div className="flex items-center justify-between px-4 py-3 bg-gray-900 border-b border-gray-800">
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-md bg-brand-600 flex items-center justify-center">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="h-7 w-7 rounded-md bg-brand-600 flex items-center justify-center shrink-0">
             <span className="text-white font-bold text-xs">F</span>
           </div>
-          <span className="text-white font-semibold text-sm">{businessName}</span>
+          <div className="min-w-0">
+            <span className="block text-white font-semibold text-sm truncate">Frontline</span>
+            <span className="block text-gray-400 text-xs truncate">{businessName}</span>
+          </div>
         </div>
         <button
           onClick={() => setOpen(!open)}
           className="p-1.5 text-gray-400 hover:text-white"
+          aria-label="Toggle navigation"
         >
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
       {open && (
-        <div className="bg-gray-900 border-b border-gray-800 px-3 py-3 space-y-1">
+        <div className="bg-gray-900 border-b border-gray-800 px-3 py-3 space-y-1 max-h-[80vh] overflow-y-auto">
           {NAV_ITEMS.map((item) => {
             const active = item.exact
               ? pathname === item.href

@@ -8,12 +8,17 @@ type QualificationResult = {
   summary: string;
   score: number;
   priority: string;
-  suggested_next_action: string;
+  suggested_next_action?: string;
+  suggestedNextAction?: string;
 };
 
 type SavedLeadResult = {
   fullName: string;
-  qualification: QualificationResult;
+  qualification?: QualificationResult;
+  aiSummary?: string;
+  qualificationScore?: number;
+  priority?: string;
+  suggestedNextAction?: string;
 };
 
 const industryOptions = [
@@ -39,6 +44,7 @@ export default function ManualIntakePage() {
     estimatedValue: "",
     message: "",
   });
+
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SavedLeadResult | null>(null);
   const [error, setError] = useState("");
@@ -67,6 +73,7 @@ export default function ManualIntakePage() {
 
       saveLeadToLocalStorage(data.lead);
       setResult(data.lead);
+
       setForm({
         fullName: "",
         phone: "",
@@ -83,10 +90,21 @@ export default function ManualIntakePage() {
     }
   }
 
+  const summary = result?.qualification?.summary ?? result?.aiSummary ?? "";
+  const score = result?.qualification?.score ?? result?.qualificationScore ?? 0;
+  const priority = result?.qualification?.priority ?? result?.priority ?? "medium";
+  const nextAction =
+    result?.qualification?.suggested_next_action ??
+    result?.qualification?.suggestedNextAction ??
+    result?.suggestedNextAction ??
+    "Follow up with the lead and confirm next steps.";
+
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Manual Assisted AI</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
+          Manual Assisted AI
+        </p>
         <h1 className="text-3xl font-bold text-slate-950">Manual Lead Intake</h1>
         <p className="mt-2 max-w-2xl text-slate-600">
           Paste a lead message from a call, text, DM, voicemail, form submission, or notes from a conversation.
@@ -150,19 +168,22 @@ export default function ManualIntakePage() {
         <div className="rounded-3xl border border-green-200 bg-green-50 p-6">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-green-700">Saved to Lead Records</p>
           <h2 className="mt-2 text-2xl font-bold text-slate-950">{result.fullName}</h2>
-          <p className="mt-2 text-slate-700">{result.qualification.summary}</p>
+          <p className="mt-2 text-slate-700">{summary}</p>
+
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             <div className="rounded-2xl bg-white p-4">
               <p className="text-xs uppercase text-slate-500">Score</p>
-              <p className="text-2xl font-bold text-slate-950">{result.qualification.score}/100</p>
+              <p className="text-2xl font-bold text-slate-950">{score}/100</p>
             </div>
+
             <div className="rounded-2xl bg-white p-4">
               <p className="text-xs uppercase text-slate-500">Priority</p>
-              <p className="text-2xl font-bold capitalize text-slate-950">{result.qualification.priority}</p>
+              <p className="text-2xl font-bold capitalize text-slate-950">{priority}</p>
             </div>
+
             <div className="rounded-2xl bg-white p-4">
               <p className="text-xs uppercase text-slate-500">Next Action</p>
-              <p className="text-sm font-semibold text-slate-950">{result.qualification.suggested_next_action}</p>
+              <p className="text-sm font-semibold text-slate-950">{nextAction}</p>
             </div>
           </div>
         </div>
