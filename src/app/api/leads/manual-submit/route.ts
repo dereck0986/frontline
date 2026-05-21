@@ -8,7 +8,7 @@ const leadSchema = z.object({
   fullName: z.string().min(2, "Full name is required.").max(120),
   phone: z.string().max(40).optional().nullable(),
   email: z.string().email().optional().or(z.literal("")),
-  industry: z.enum(["real_estate", "security", "contractors", "med_spas", "rentals", "other"]),
+  industry: z.enum(["real_estate", "security", "contractors", "med_spas", "rentals"]),
   source: z.string().max(80).optional().default("manual"),
   message: z.string().min(5, "Lead request is required.").max(4000),
   estimatedValue: z.string().max(80).optional().nullable(),
