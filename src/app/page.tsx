@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/landing/navbar";
 import { Hero } from "@/components/landing/hero";
+import { OperationsDemo } from "@/components/landing/operations-demo";
 import { Features } from "@/components/landing/features";
 import { Pricing } from "@/components/landing/pricing";
 import { CTA } from "@/components/landing/cta";
@@ -10,6 +11,7 @@ export default function LandingPage() {
     <main>
       <Navbar />
       <Hero />
+      <OperationsDemo />
       <Features />
       <Pricing />
       <CTA />
