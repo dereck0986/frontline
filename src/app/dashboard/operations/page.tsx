@@ -85,79 +85,77 @@ export default function OperationsPage() {
   const highCount = items.filter((item) => item.priority === "high").length;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Unified Operations Inbox</h1>
-        <p className="text-gray-500 mt-1">
-          One demo command center for leads, reviews, scheduling requests, orders, and urgent escalations.
-        </p>
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Unified Operations Inbox</h1>
+          <p className="mt-1 max-w-3xl text-sm text-gray-500">
+            One compact command center for leads, reviews, scheduling, orders, and urgent escalations.
+          </p>
+        </div>
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 lg:max-w-md">
+          <span className="font-semibold">Demo mode:</span> mocked activity from {frontlineDemoData.account.businessName}.
+        </div>
       </div>
 
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-        <p className="text-sm font-medium text-amber-800">Demo Mode Active</p>
-        <p className="mt-1 text-sm text-amber-700">
-          This inbox combines mocked operational activity from {frontlineDemoData.account.businessName}. No live customer systems are connected yet.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <p className="text-sm text-gray-500">Total Items</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{items.length}</p>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-3">
+          <p className="text-xs text-gray-500">Total Items</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900">{items.length}</p>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <p className="text-sm text-gray-500">Urgent</p>
-          <p className="mt-2 text-3xl font-bold text-red-600">{urgentCount}</p>
+        <div className="rounded-xl border border-gray-200 bg-white p-3">
+          <p className="text-xs text-gray-500">Urgent</p>
+          <p className="mt-1 text-2xl font-bold text-red-600">{urgentCount}</p>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <p className="text-sm text-gray-500">High Priority</p>
-          <p className="mt-2 text-3xl font-bold text-orange-600">{highCount}</p>
+        <div className="rounded-xl border border-gray-200 bg-white p-3">
+          <p className="text-xs text-gray-500">High Priority</p>
+          <p className="mt-1 text-2xl font-bold text-orange-600">{highCount}</p>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <p className="text-sm text-gray-500">Open Opportunity</p>
-          <p className="mt-2 text-3xl font-bold text-emerald-600">{frontlineDemoData.metrics.estimatedOpenOpportunity}</p>
+        <div className="rounded-xl border border-gray-200 bg-white p-3">
+          <p className="text-xs text-gray-500">Open Opportunity</p>
+          <p className="mt-1 text-2xl font-bold text-emerald-600">{frontlineDemoData.metrics.estimatedOpenOpportunity}</p>
         </div>
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white">
-        <div className="border-b border-gray-100 px-6 py-4">
+        <div className="border-b border-gray-100 px-4 py-3">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-orange-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Priority Operations Stream</h2>
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            <h2 className="text-base font-semibold text-gray-900">Priority Operations Stream</h2>
           </div>
-          <p className="mt-1 text-sm text-gray-500">Sorted by urgency so owners know what needs attention first.</p>
+          <p className="mt-1 text-xs text-gray-500">Fixed-height workspace sorted by urgency. Scroll inside the panel, not the whole page.</p>
         </div>
 
-        <div className="divide-y divide-gray-100">
+        <div className="max-h-[560px] divide-y divide-gray-100 overflow-y-auto">
           {items.map((item) => {
             const Icon = getTypeIcon(item.type);
             return (
-              <div key={`${item.type}-${item.id}`} className="p-6 hover:bg-gray-50 transition-colors">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="flex gap-4">
-                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${getTypeClasses(item.type)}`}>
-                      <Icon size={20} />
+              <div key={`${item.type}-${item.id}`} className="p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex gap-3">
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${getTypeClasses(item.type)}`}>
+                      <Icon size={17} />
                     </div>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold text-gray-900">{item.title}</h3>
-                        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium capitalize text-gray-700">
+                        <h3 className="text-sm font-semibold text-gray-900">{item.title}</h3>
+                        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium capitalize text-gray-700">
                           {item.type}
                         </span>
-                        <span className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${getPriorityClasses(item.priority)}`}>
+                        <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium capitalize ${getPriorityClasses(item.priority)}`}>
                           {item.priority}
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-gray-500 capitalize">{item.subtitle}</p>
-                      <p className="mt-3 max-w-3xl text-sm text-gray-700">{item.message}</p>
-                      <div className="mt-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-900">
+                      <p className="mt-0.5 text-xs text-gray-500 capitalize">{item.subtitle}</p>
+                      <p className="mt-2 max-w-3xl text-sm text-gray-700">{item.message}</p>
+                      <div className="mt-2 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-900">
                         <span className="font-semibold">Next action: </span>{item.nextAction}
                       </div>
                     </div>
                   </div>
 
-                  <Link href={item.href} className="rounded-lg border border-gray-200 px-4 py-2 text-center text-sm font-semibold text-gray-700 hover:bg-white lg:shrink-0">
-                    Open Workflow
+                  <Link href={item.href} className="rounded-lg border border-gray-200 px-3 py-2 text-center text-xs font-semibold text-gray-700 hover:bg-white lg:shrink-0">
+                    Open
                   </Link>
                 </div>
               </div>
