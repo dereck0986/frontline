@@ -50,7 +50,7 @@ export function MobileNav({ businessName }: MobileNavProps) {
   return (
     <div className="md:hidden sticky top-0 z-40">
       <div className="flex items-center justify-between px-4 py-3 bg-gray-900 border-b border-gray-800 shadow-sm">
-        <div className="flex items-center gap-2 min-w-0">
+        <Link href="/dashboard" className="flex items-center gap-2 min-w-0" onClick={() => setOpen(false)}>
           <div className="h-7 w-7 rounded-md bg-brand-600 flex items-center justify-center shrink-0">
             <span className="text-white font-bold text-xs">F</span>
           </div>
@@ -58,7 +58,7 @@ export function MobileNav({ businessName }: MobileNavProps) {
             <span className="block text-white font-semibold text-sm truncate">Frontline</span>
             <span className="block text-gray-400 text-xs truncate">{businessName}</span>
           </div>
-        </div>
+        </Link>
         <button
           onClick={() => setOpen(!open)}
           className="rounded-lg p-2 text-gray-300 hover:text-white hover:bg-gray-800"
