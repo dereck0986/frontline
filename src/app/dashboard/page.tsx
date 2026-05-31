@@ -41,7 +41,7 @@ export default async function DashboardPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
         <p className="font-semibold">Demo mode active</p>
         <p className="mt-1">{demo.account.notice}</p>
@@ -74,17 +74,17 @@ export default async function DashboardPage() {
       </div>
 
       {subscription?.plan === "free" && (
-        <div className="rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 p-5 text-white">
+        <div className="rounded-xl border border-brand-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="font-semibold">You&apos;re on the Free plan</p>
-              <p className="text-sm text-white/80 mt-0.5">
+              <p className="font-semibold text-gray-900">You&apos;re on the Free plan</p>
+              <p className="text-sm text-gray-500 mt-0.5">
                 Starter is $500/mo. Pro is $1,000/mo. Premium setup is $1,500–$2,500/mo.
               </p>
             </div>
 
             <Link href="/dashboard/billing" className="w-full sm:w-auto shrink-0">
-              <Button className="w-full sm:w-auto bg-white text-brand-700 hover:bg-brand-50" size="sm">
+              <Button className="w-full sm:w-auto" size="sm">
                 View Pricing
               </Button>
             </Link>
