@@ -1,4 +1,25 @@
+export const dynamic = "force-dynamic";
+
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getBusinessByUserId, getLeadsByUserId } from "@/lib/db";
 import { frontlineDemoData } from "@/lib/demo-data";
+
+type DisplayLead = {
+  id: string;
+  fullName: string;
+  phone: string | null;
+  email: string | null;
+  industry: string;
+  source: string;
+  priority: string;
+  qualificationScore: number;
+  aiSummary: string | null;
+  suggestedNextAction: string;
+  estimatedValue: string | null;
+  needsHumanAttention: boolean;
+};
 
 function getPriorityClasses(priority: string) {
   if (priority === "urgent") return "bg-red-100 text-red-700";
@@ -7,23 +28,70 @@ function getPriorityClasses(priority: string) {
   return "bg-gray-100 text-gray-700";
 }
 
-export default function LeadRecordsPage() {
-  const demoLeads = frontlineDemoData.leads;
-  const urgentLeads = demoLeads.filter((lead) => lead.priority === "urgent").length;
+function normalizeDemoLead(lead: (typeof frontlineDemoData.leads)[number]): DisplayLead {
+  return {
+    id: lead.id,
+    fullName: lead.fullName,
+    phone: lead.phone,
+    email: lead.email,
+    industry: lead.industry,
+    source: lead.source,
+    priority: lead.priority,
+    qualificationScore: lead.qualificationScore,
+    aiSummary: lead.aiSummary,
+    suggestedNextAction: lead.suggestedNextAction,
+    estimatedValue: lead.estimatedValue,
+    needsHumanAttention: lead.needsHumanAttention,
+  };
+}
+
+export default async function LeadRecordsPage() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) redirect("/login");
+
+  const business = await getBusinessByUserId(session.user.id);
+  if (!business) redirect("/onboarding");
+
+  const persistedLeads = await getLeadsByUserId(session.user.id);
+  const hasPersistedLeads = persistedLeads.length > 0;
+
+  const leads: DisplayLead[] = hasPersistedLeads
+    ? persistedLeads.map((lead) => ({
+        id: lead.id,
+        fullName: lead.full_name,
+        phone: lead.phone,
+        email: lead.email,
+        industry: lead.industry,
+        source: lead.source,
+        priority: lead.priority,
+        qualificationScore: lead.qualification_score,
+        aiSummary: lead.ai_summary,
+        suggestedNextAction: "Follow up and confirm the strongest next qualification step.",
+        estimatedValue: lead.estimated_value,
+        needsHumanAttention: lead.needs_human_attention,
+      }))
+    : frontlineDemoData.leads.map(normalizeDemoLead);
+
+  const urgentLeads = leads.filter((lead) => lead.priority === "urgent").length;
+  const pipelineValue = hasPersistedLeads
+    ? `${leads.length} saved lead${leads.length === 1 ? "" : "s"}`
+    : frontlineDemoData.metrics.estimatedOpenOpportunity;
 
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Lead Records</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Qualified leads, AI summaries, urgency, and next actions.
+          {hasPersistedLeads
+            ? "Showing persisted leads saved to your Frontline database."
+            : "Showing demo leads until your first saved lead is created."}
         </p>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl border border-gray-200 bg-white p-3">
           <p className="text-xs text-gray-500">Qualified</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">{demoLeads.length}</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900">{leads.length}</p>
         </div>
         <div className="rounded-xl border border-gray-200 bg-white p-3">
           <p className="text-xs text-gray-500">Urgent</p>
@@ -31,7 +99,7 @@ export default function LeadRecordsPage() {
         </div>
         <div className="rounded-xl border border-gray-200 bg-white p-3">
           <p className="text-xs text-gray-500">Pipeline</p>
-          <p className="mt-1 text-xl font-bold text-emerald-600 sm:text-2xl">{frontlineDemoData.metrics.estimatedOpenOpportunity}</p>
+          <p className="mt-1 text-xl font-bold text-emerald-600 sm:text-2xl">{pipelineValue}</p>
         </div>
       </div>
 
@@ -42,12 +110,14 @@ export default function LeadRecordsPage() {
               <h2 className="text-base font-semibold text-gray-900">Qualified Leads</h2>
               <p className="text-xs text-gray-500">Mobile card view. Desktop table view.</p>
             </div>
-            <span className="text-xs text-gray-500">{demoLeads.length} demo records</span>
+            <span className="text-xs text-gray-500">
+              {hasPersistedLeads ? `${leads.length} saved records` : `${leads.length} demo records`}
+            </span>
           </div>
         </div>
 
         <div className="max-h-[560px] space-y-3 overflow-y-auto p-4 md:hidden">
-          {demoLeads.map((lead) => (
+          {leads.map((lead) => (
             <div key={lead.id} className="rounded-xl border border-gray-100 bg-gray-50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -76,7 +146,7 @@ export default function LeadRecordsPage() {
 
               <div className="mt-3 rounded-lg bg-white p-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">AI Summary</p>
-                <p className="mt-1 text-xs text-gray-700">{lead.aiSummary}</p>
+                <p className="mt-1 text-xs text-gray-700">{lead.aiSummary ?? "No summary saved yet."}</p>
               </div>
 
               <div className="mt-3 rounded-lg bg-blue-50 p-3">
@@ -100,7 +170,7 @@ export default function LeadRecordsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
-              {demoLeads.map((lead) => (
+              {leads.map((lead) => (
                 <tr key={lead.id} className="align-top transition-colors hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <p className="text-sm font-medium text-gray-900">{lead.fullName}</p>
@@ -114,7 +184,7 @@ export default function LeadRecordsPage() {
                       {lead.priority}
                     </span>
                   </td>
-                  <td className="max-w-sm px-4 py-3 text-xs text-gray-600">{lead.aiSummary}</td>
+                  <td className="max-w-sm px-4 py-3 text-xs text-gray-600">{lead.aiSummary ?? "No summary saved yet."}</td>
                   <td className="max-w-sm px-4 py-3 text-xs text-gray-600">
                     <p>{lead.suggestedNextAction}</p>
                     {lead.needsHumanAttention && (
