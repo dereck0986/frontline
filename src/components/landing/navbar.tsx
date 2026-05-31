@@ -33,6 +33,12 @@ export function Navbar() {
             >
               Pricing
             </Link>
+            <Link
+              href="/dashboard/operations"
+              className="text-sm font-medium text-brand-700 hover:text-brand-800 transition-colors"
+            >
+              Try Demo
+            </Link>
             <div className="flex items-center gap-3">
               <Link href="/login">
                 <Button variant="ghost" size="sm">
@@ -40,7 +46,7 @@ export function Navbar() {
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button size="sm">Start Free Trial</Button>
+                <Button size="sm">Start Pilot</Button>
               </Link>
             </div>
           </div>
@@ -75,6 +81,13 @@ export function Navbar() {
           >
             Pricing
           </Link>
+          <Link
+            href="/dashboard/operations"
+            className="text-sm font-medium text-brand-700"
+            onClick={() => setOpen(false)}
+          >
+            Try Demo
+          </Link>
           <Link href="/login">
             <Button variant="ghost" size="sm" className="w-full">
               Log in
@@ -82,7 +95,7 @@ export function Navbar() {
           </Link>
           <Link href="/signup">
             <Button size="sm" className="w-full">
-              Start Free Trial
+              Start Pilot
             </Button>
           </Link>
         </div>
