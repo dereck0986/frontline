@@ -14,13 +14,20 @@ import {
   Settings,
   CreditCard,
   LogOut,
+  MessageSquareReply,
+  CalendarDays,
+  ClipboardList,
+  Command,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/leads", label: "Leads", icon: Users, exact: false },
+  { href: "/dashboard/operations", label: "Operations Inbox", icon: Command, exact: false },
   { href: "/dashboard/intake", label: "Lead Intake", icon: ClipboardPlus, exact: false },
   { href: "/dashboard/lead-records", label: "Lead Records", icon: Users, exact: false },
+  { href: "/dashboard/reviews", label: "Reviews", icon: MessageSquareReply, exact: false },
+  { href: "/dashboard/scheduling", label: "Scheduling", icon: CalendarDays, exact: false },
+  { href: "/dashboard/orders", label: "Orders", icon: ClipboardList, exact: false },
   { href: "/dashboard/conversations", label: "Conversations", icon: MessagesSquare, exact: false },
   { href: "/dashboard/automations", label: "Automations", icon: Workflow, exact: false },
   { href: "/dashboard/templates", label: "Templates", icon: FileText, exact: false },

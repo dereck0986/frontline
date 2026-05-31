@@ -16,14 +16,21 @@ import {
   LogOut,
   Menu,
   X,
+  MessageSquareReply,
+  CalendarDays,
+  ClipboardList,
+  Command,
 } from "lucide-react";
 import { useState } from "react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/leads", label: "Leads", icon: Users, exact: false },
+  { href: "/dashboard/operations", label: "Operations Inbox", icon: Command, exact: false },
   { href: "/dashboard/intake", label: "Lead Intake", icon: ClipboardPlus, exact: false },
   { href: "/dashboard/lead-records", label: "Lead Records", icon: Users, exact: false },
+  { href: "/dashboard/reviews", label: "Reviews", icon: MessageSquareReply, exact: false },
+  { href: "/dashboard/scheduling", label: "Scheduling", icon: CalendarDays, exact: false },
+  { href: "/dashboard/orders", label: "Orders", icon: ClipboardList, exact: false },
   { href: "/dashboard/conversations", label: "Conversations", icon: MessagesSquare, exact: false },
   { href: "/dashboard/automations", label: "Automations", icon: Workflow, exact: false },
   { href: "/dashboard/templates", label: "Templates", icon: FileText, exact: false },
@@ -41,8 +48,8 @@ export function MobileNav({ businessName }: MobileNavProps) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="md:hidden">
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-900 border-b border-gray-800">
+    <div className="md:hidden sticky top-0 z-40">
+      <div className="flex items-center justify-between px-4 py-3 bg-gray-900 border-b border-gray-800 shadow-sm">
         <div className="flex items-center gap-2 min-w-0">
           <div className="h-7 w-7 rounded-md bg-brand-600 flex items-center justify-center shrink-0">
             <span className="text-white font-bold text-xs">F</span>
@@ -54,7 +61,7 @@ export function MobileNav({ businessName }: MobileNavProps) {
         </div>
         <button
           onClick={() => setOpen(!open)}
-          className="p-1.5 text-gray-400 hover:text-white"
+          className="rounded-lg p-2 text-gray-300 hover:text-white hover:bg-gray-800"
           aria-label="Toggle navigation"
         >
           {open ? <X size={20} /> : <Menu size={20} />}
@@ -62,7 +69,7 @@ export function MobileNav({ businessName }: MobileNavProps) {
       </div>
 
       {open && (
-        <div className="bg-gray-900 border-b border-gray-800 px-3 py-3 space-y-1 max-h-[80vh] overflow-y-auto">
+        <div className="bg-gray-900 border-b border-gray-800 px-3 py-3 space-y-1 max-h-[80vh] overflow-y-auto shadow-xl">
           {NAV_ITEMS.map((item) => {
             const active = item.exact
               ? pathname === item.href
@@ -73,7 +80,7 @@ export function MobileNav({ businessName }: MobileNavProps) {
                 href={item.href}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                  "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors",
                   active
                     ? "bg-brand-600 text-white"
                     : "text-gray-400 hover:text-white hover:bg-gray-800"
@@ -86,7 +93,7 @@ export function MobileNav({ businessName }: MobileNavProps) {
           })}
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+            className="flex w-full items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
           >
             <LogOut size={16} />
             Sign out

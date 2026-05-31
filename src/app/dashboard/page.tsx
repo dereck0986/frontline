@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getBusinessByUserId, getSubscriptionByUserId } from "@/lib/db";
+import { frontlineDemoData } from "@/lib/demo-data";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -13,6 +14,8 @@ import {
   BellRing,
   DollarSign,
   PlusCircle,
+  Star,
+  ClipboardList,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -26,23 +29,31 @@ export default async function DashboardPage() {
 
   if (!business) redirect("/onboarding");
 
+  const demo = frontlineDemoData;
   const dashboardMetrics = {
-    totalLeads: 42,
-    qualifiedLeads: 18,
-    followUpsDue: 7,
-    appointmentsBooked: 11,
-    revenueOpportunity: "$84,500",
+    totalLeads: demo.metrics.totalLeads,
+    qualifiedLeads: demo.leads.filter((lead) => lead.status === "qualified").length,
+    followUpsDue: demo.metrics.urgentItems,
+    appointmentsBooked: demo.metrics.scheduleRequests,
+    revenueOpportunity: demo.metrics.estimatedOpenOpportunity,
+    reviewsPending: demo.metrics.reviewsPending,
+    orderRequests: demo.metrics.orderRequests,
   };
 
   return (
     <div className="space-y-8">
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        <p className="font-semibold">Demo mode active</p>
+        <p className="mt-1">{demo.account.notice}</p>
+      </div>
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
             Frontline Command Center
           </h1>
           <p className="text-gray-500 mt-1">
-            {business.name} · Revenue Recovery Infrastructure
+            {business.name || demo.account.businessName} · Revenue Recovery Infrastructure
           </p>
         </div>
 
@@ -55,11 +66,11 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard title="Total Leads" value={dashboardMetrics.totalLeads} subtitle="Captured leads" icon={Users} iconColor="text-brand-600" iconBg="bg-brand-50" />
+        <StatCard title="Total Leads" value={dashboardMetrics.totalLeads} subtitle="Demo captured leads" icon={Users} iconColor="text-brand-600" iconBg="bg-brand-50" />
         <StatCard title="Qualified Leads" value={dashboardMetrics.qualifiedLeads} subtitle="AI-qualified" icon={Users} iconColor="text-emerald-600" iconBg="bg-emerald-50" />
-        <StatCard title="Follow-Ups Due" value={dashboardMetrics.followUpsDue} subtitle="Need attention" icon={BellRing} iconColor="text-orange-600" iconBg="bg-orange-50" />
-        <StatCard title="Appointments" value={dashboardMetrics.appointmentsBooked} subtitle="Booked meetings" icon={CalendarDays} iconColor="text-indigo-600" iconBg="bg-indigo-50" />
-        <StatCard title="Revenue Opportunity" value={dashboardMetrics.revenueOpportunity} subtitle="Potential pipeline" icon={DollarSign} iconColor="text-green-600" iconBg="bg-green-50" />
+        <StatCard title="Urgent Items" value={dashboardMetrics.followUpsDue} subtitle="Need attention" icon={BellRing} iconColor="text-orange-600" iconBg="bg-orange-50" />
+        <StatCard title="Scheduling" value={dashboardMetrics.appointmentsBooked} subtitle="Booking requests" icon={CalendarDays} iconColor="text-indigo-600" iconBg="bg-indigo-50" />
+        <StatCard title="Opportunity" value={dashboardMetrics.revenueOpportunity} subtitle="Open pipeline" icon={DollarSign} iconColor="text-green-600" iconBg="bg-green-50" />
       </div>
 
       {subscription?.plan === "free" && (
@@ -84,9 +95,9 @@ export default async function DashboardPage() {
       <div className="rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">AI Lead Recovery System</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Demo Operations Feed</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Frontline automatically responds, qualifies, follows up, and routes leads toward booked appointments.
+              Sample leads, reviews, scheduling requests, and order requests show how Frontline supports day-to-day business operations.
             </p>
           </div>
 
@@ -97,18 +108,26 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
           <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
-            <p className="text-sm font-semibold text-gray-900">Instant Response</p>
-            <p className="text-sm text-gray-500 mt-2">Responds to leads immediately through AI-driven workflows.</p>
+            <Users className="h-5 w-5 text-brand-600" />
+            <p className="mt-3 text-sm font-semibold text-gray-900">Latest Lead</p>
+            <p className="mt-1 text-sm text-gray-500">{demo.leads[0].aiSummary}</p>
           </div>
           <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
-            <p className="text-sm font-semibold text-gray-900">AI Qualification</p>
-            <p className="text-sm text-gray-500 mt-2">Scores urgency, opportunity value, and conversion potential.</p>
+            <Star className="h-5 w-5 text-yellow-600" />
+            <p className="mt-3 text-sm font-semibold text-gray-900">Review Queue</p>
+            <p className="mt-1 text-sm text-gray-500">{demo.reviews[1].nextAction}</p>
           </div>
           <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
-            <p className="text-sm font-semibold text-gray-900">Automated Follow-Up</p>
-            <p className="text-sm text-gray-500 mt-2">Keeps leads engaged until booked, closed, or recycled.</p>
+            <CalendarDays className="h-5 w-5 text-indigo-600" />
+            <p className="mt-3 text-sm font-semibold text-gray-900">Scheduling</p>
+            <p className="mt-1 text-sm text-gray-500">{demo.scheduleRequests[0].nextAction}</p>
+          </div>
+          <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
+            <ClipboardList className="h-5 w-5 text-emerald-600" />
+            <p className="mt-3 text-sm font-semibold text-gray-900">Orders / Requests</p>
+            <p className="mt-1 text-sm text-gray-500">{demo.orderRequests[0].nextAction}</p>
           </div>
         </div>
       </div>
