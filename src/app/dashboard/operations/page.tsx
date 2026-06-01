@@ -1,4 +1,10 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getBusinessByUserId, getOperationEventsByUserId } from "@/lib/db";
 import { frontlineDemoData } from "@/lib/demo-data";
 import { AlertTriangle, CalendarDays, ClipboardList, MessageSquareReply, Users } from "lucide-react";
 
@@ -34,8 +40,22 @@ function getTypeClasses(type: OperationsItem["type"]) {
   return "bg-emerald-50 text-emerald-700";
 }
 
-export default function OperationsPage() {
-  const items: OperationsItem[] = [
+function getEventType(eventType: string): OperationsItem["type"] {
+  if (eventType.includes("lead")) return "lead";
+  if (eventType.includes("review")) return "review";
+  if (eventType.includes("schedule")) return "schedule";
+  return "order";
+}
+
+function getEventHref(type: OperationsItem["type"]) {
+  if (type === "lead") return "/dashboard/lead-records";
+  if (type === "review") return "/dashboard/reviews";
+  if (type === "schedule") return "/dashboard/scheduling";
+  return "/dashboard/orders";
+}
+
+function getDemoItems(): OperationsItem[] {
+  return [
     ...frontlineDemoData.leads.map((lead) => ({
       id: lead.id,
       type: "lead" as const,
@@ -76,7 +96,35 @@ export default function OperationsPage() {
       nextAction: request.nextAction,
       href: "/dashboard/orders",
     })),
-  ].sort((a, b) => {
+  ];
+}
+
+export default async function OperationsPage() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) redirect("/login");
+
+  const business = await getBusinessByUserId(session.user.id);
+  if (!business) redirect("/onboarding");
+
+  const events = await getOperationEventsByUserId(session.user.id);
+  const hasEvents = events.length > 0;
+
+  const items: OperationsItem[] = (hasEvents
+    ? events.map((event) => {
+        const type = getEventType(event.event_type);
+        return {
+          id: event.id,
+          type,
+          title: event.title,
+          subtitle: `${event.source} · ${event.channel} · ${event.status}`,
+          message: event.summary ?? "No summary saved yet.",
+          priority: event.priority,
+          nextAction: event.next_action ?? "Review this operational event and decide next step.",
+          href: getEventHref(type),
+        };
+      })
+    : getDemoItems()
+  ).sort((a, b) => {
     const weight: Record<string, number> = { urgent: 4, high: 3, medium: 2, low: 1 };
     return (weight[b.priority] ?? 0) - (weight[a.priority] ?? 0);
   });
@@ -90,12 +138,14 @@ export default function OperationsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Unified Operations Inbox</h1>
           <p className="mt-1 max-w-3xl text-sm text-gray-500">
-            One compact command center for leads, reviews, scheduling, orders, and urgent escalations.
+            {hasEvents ? "Live operations events from your Frontline database." : "Demo command center for leads, reviews, scheduling, orders, and urgent escalations."}
           </p>
         </div>
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 lg:max-w-md">
-          <span className="font-semibold">Demo mode:</span> mocked activity from {frontlineDemoData.account.businessName}.
-        </div>
+        {!hasEvents && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 lg:max-w-md">
+            <span className="font-semibold">Demo mode:</span> mocked activity from {frontlineDemoData.account.businessName}.
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -112,8 +162,8 @@ export default function OperationsPage() {
           <p className="mt-1 text-2xl font-bold text-orange-600">{highCount}</p>
         </div>
         <div className="rounded-xl border border-gray-200 bg-white p-3">
-          <p className="text-xs text-gray-500">Open Opportunity</p>
-          <p className="mt-1 text-2xl font-bold text-emerald-600">{frontlineDemoData.metrics.estimatedOpenOpportunity}</p>
+          <p className="text-xs text-gray-500">Source</p>
+          <p className="mt-1 text-2xl font-bold text-emerald-600">{hasEvents ? "Live" : "Demo"}</p>
         </div>
       </div>
 
