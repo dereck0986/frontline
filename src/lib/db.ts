@@ -59,6 +59,25 @@ export interface OrderRequest {
   updated_at: string;
 }
 
+export interface OperationEvent {
+  id: string;
+  business_id: string;
+  user_id: string;
+  event_type: string;
+  source: string;
+  channel: string;
+  priority: string;
+  title: string;
+  summary: string | null;
+  next_action: string | null;
+  status: string;
+  related_entity_type: string | null;
+  related_entity_id: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
 export async function getUserByEmail(email: string): Promise<(User & { password: string }) | null> {
   const { rows } = await sql`SELECT id, name, email, password, created_at FROM users WHERE email = ${email} LIMIT 1`;
   return (rows[0] as (User & { password: string })) ?? null;
@@ -90,13 +109,46 @@ export async function updateBusiness(id: string, data: { name: string; industry:
   return rows[0] as Business;
 }
 
+export async function createOperationEvent(data: { userId: string; businessId: string; eventType: string; source?: string; channel?: string; priority?: string; title: string; summary?: string | null; nextAction?: string | null; status?: string; relatedEntityType?: string | null; relatedEntityId?: string | null; metadata?: Record<string, unknown>; }): Promise<OperationEvent> {
+  const { rows } = await sql`
+    INSERT INTO operations_events (user_id, business_id, event_type, source, channel, priority, title, summary, next_action, status, related_entity_type, related_entity_id, metadata)
+    VALUES (${data.userId}, ${data.businessId}, ${data.eventType}, ${data.source ?? "manual"}, ${data.channel ?? "manual"}, ${data.priority ?? "medium"}, ${data.title}, ${data.summary ?? null}, ${data.nextAction ?? null}, ${data.status ?? "open"}, ${data.relatedEntityType ?? null}, ${data.relatedEntityId ?? null}, ${JSON.stringify(data.metadata ?? {})}::jsonb)
+    RETURNING *
+  `;
+  return rows[0] as OperationEvent;
+}
+
+export async function getOperationEventsByUserId(userId: string, limit = 50): Promise<OperationEvent[]> {
+  const { rows } = await sql`SELECT * FROM operations_events WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT ${limit}`;
+  return rows as OperationEvent[];
+}
+
+export async function updateOperationEventStatus(id: string, status: string): Promise<void> {
+  await sql`UPDATE operations_events SET status = ${status}, updated_at = NOW() WHERE id = ${id}`;
+}
+
 export async function createLead(data: { userId: string; businessId: string; fullName: string; phone?: string | null; email?: string | null; source?: string; industry: string; status?: string; priority?: string; aiSummary?: string | null; qualificationScore?: number; estimatedValue?: string | null; needsHumanAttention?: boolean; }): Promise<Lead> {
   const { rows } = await sql`
     INSERT INTO leads (user_id, business_id, full_name, phone, email, source, industry, status, priority, ai_summary, qualification_score, estimated_value, needs_human_attention)
     VALUES (${data.userId}, ${data.businessId}, ${data.fullName}, ${data.phone ?? null}, ${data.email ?? null}, ${data.source ?? "manual"}, ${data.industry}, ${data.status ?? "new"}, ${data.priority ?? "medium"}, ${data.aiSummary ?? null}, ${data.qualificationScore ?? 0}, ${data.estimatedValue ?? null}, ${data.needsHumanAttention ?? false})
     RETURNING *
   `;
-  return rows[0] as Lead;
+  const lead = rows[0] as Lead;
+  await createOperationEvent({
+    userId: lead.user_id,
+    businessId: lead.business_id,
+    eventType: "lead_created",
+    source: lead.source,
+    channel: "manual",
+    priority: lead.priority,
+    title: `Lead created: ${lead.full_name}`,
+    summary: lead.ai_summary,
+    nextAction: "Follow up and confirm the strongest next qualification step.",
+    relatedEntityType: "lead",
+    relatedEntityId: lead.id,
+    metadata: { qualificationScore: lead.qualification_score, industry: lead.industry, estimatedValue: lead.estimated_value },
+  });
+  return lead;
 }
 
 export async function getLeadsByUserId(userId: string, limit = 50): Promise<Lead[]> {
@@ -110,7 +162,22 @@ export async function createSchedulingRequest(data: { userId: string; businessId
     VALUES (${data.userId}, ${data.businessId}, ${data.customerName}, ${data.channel ?? "manual"}, ${data.requestedService}, ${data.requestedTime ?? null}, ${data.message}, ${data.priority ?? "medium"}, ${data.suggestedResponse ?? null}, ${data.nextAction ?? null}, ${data.status ?? "open"})
     RETURNING *
   `;
-  return rows[0] as SchedulingRequest;
+  const request = rows[0] as SchedulingRequest;
+  await createOperationEvent({
+    userId: request.user_id,
+    businessId: request.business_id,
+    eventType: "schedule_request_created",
+    source: request.channel,
+    channel: request.channel,
+    priority: request.priority,
+    title: `Scheduling request: ${request.customer_name}`,
+    summary: request.message,
+    nextAction: request.next_action,
+    relatedEntityType: "scheduling_request",
+    relatedEntityId: request.id,
+    metadata: { requestedService: request.requested_service, requestedTime: request.requested_time },
+  });
+  return request;
 }
 
 export async function getSchedulingRequestsByUserId(userId: string, limit = 50): Promise<SchedulingRequest[]> {
@@ -124,7 +191,22 @@ export async function createOrderRequest(data: { userId: string; businessId: str
     VALUES (${data.userId}, ${data.businessId}, ${data.customerName}, ${data.channel ?? "manual"}, ${data.requestType}, ${data.message}, ${data.estimatedValue ?? null}, ${data.priority ?? "medium"}, ${data.suggestedResponse ?? null}, ${data.nextAction ?? null}, ${data.status ?? "open"})
     RETURNING *
   `;
-  return rows[0] as OrderRequest;
+  const request = rows[0] as OrderRequest;
+  await createOperationEvent({
+    userId: request.user_id,
+    businessId: request.business_id,
+    eventType: "order_request_created",
+    source: request.channel,
+    channel: request.channel,
+    priority: request.priority,
+    title: `Order request: ${request.customer_name}`,
+    summary: request.message,
+    nextAction: request.next_action,
+    relatedEntityType: "order_request",
+    relatedEntityId: request.id,
+    metadata: { requestType: request.request_type, estimatedValue: request.estimated_value },
+  });
+  return request;
 }
 
 export async function getOrderRequestsByUserId(userId: string, limit = 50): Promise<OrderRequest[]> {
