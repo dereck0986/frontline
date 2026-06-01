@@ -1,4 +1,5 @@
 import { sql } from "@vercel/postgres";
+import { createOperationalSideEffects } from "@/lib/ops-side-effects";
 import type { ToneProfile, SubscriptionPlan, SubscriptionStatus, ReviewStatus } from "@/types/database";
 
 export interface User { id: string; name: string | null; email: string; created_at: string; }
@@ -115,7 +116,21 @@ export async function createOperationEvent(data: { userId: string; businessId: s
     VALUES (${data.userId}, ${data.businessId}, ${data.eventType}, ${data.source ?? "manual"}, ${data.channel ?? "manual"}, ${data.priority ?? "medium"}, ${data.title}, ${data.summary ?? null}, ${data.nextAction ?? null}, ${data.status ?? "open"}, ${data.relatedEntityType ?? null}, ${data.relatedEntityId ?? null}, ${JSON.stringify(data.metadata ?? {})}::jsonb)
     RETURNING *
   `;
-  return rows[0] as OperationEvent;
+  const event = rows[0] as OperationEvent;
+
+  await createOperationalSideEffects({
+    userId: event.user_id,
+    businessId: event.business_id,
+    action: event.event_type,
+    entityType: event.related_entity_type,
+    entityId: event.related_entity_id,
+    summary: event.summary,
+    priority: event.priority,
+    title: event.title,
+    metadata: event.metadata,
+  });
+
+  return event;
 }
 
 export async function getOperationEventsByUserId(userId: string, limit = 50): Promise<OperationEvent[]> {
