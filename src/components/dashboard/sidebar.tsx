@@ -18,11 +18,13 @@ import {
   CalendarDays,
   ClipboardList,
   Command,
+  BellRing,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/operations", label: "Operations Inbox", icon: Command, exact: false },
+  { href: "/dashboard/notifications", label: "Notifications", icon: BellRing, exact: false },
   { href: "/dashboard/intake", label: "Lead Intake", icon: ClipboardPlus, exact: false },
   { href: "/dashboard/lead-records", label: "Lead Records", icon: Users, exact: false },
   { href: "/dashboard/reviews", label: "Reviews", icon: MessageSquareReply, exact: false },
@@ -46,12 +48,12 @@ export function Sidebar({ userEmail, businessName }: SidebarProps) {
   return (
     <aside className="hidden md:flex flex-col w-64 bg-gray-900 min-h-screen">
       <div className="px-6 py-5 border-b border-gray-800">
-        <div className="flex items-center gap-2">
+        <Link href="/dashboard" className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-brand-600 flex items-center justify-center">
             <span className="text-white font-bold text-sm">F</span>
           </div>
           <span className="text-white font-bold text-lg">Frontline</span>
-        </div>
+        </Link>
       </div>
 
       <div className="px-6 py-4 border-b border-gray-800">
