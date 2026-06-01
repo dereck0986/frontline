@@ -1,5 +1,23 @@
+export const dynamic = "force-dynamic";
+
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getBusinessByUserId, getOrderRequestsByUserId } from "@/lib/db";
 import { frontlineDemoData } from "@/lib/demo-data";
 import { ClipboardList, AlertTriangle, MessageSquareReply } from "lucide-react";
+
+type DisplayOrderRequest = {
+  id: string;
+  customerName: string;
+  channel: string;
+  requestType: string;
+  message: string;
+  estimatedValue: string | null;
+  priority: string;
+  suggestedResponse: string | null;
+  nextAction: string | null;
+};
 
 function getPriorityClasses(priority: string) {
   if (priority === "urgent") return "bg-red-100 text-red-700";
@@ -14,8 +32,44 @@ function getRequestTypeLabel(type: string) {
   return "Order";
 }
 
-export default function OrdersPage() {
-  const requests = frontlineDemoData.orderRequests;
+function normalizeDemoRequest(request: (typeof frontlineDemoData.orderRequests)[number]): DisplayOrderRequest {
+  return {
+    id: request.id,
+    customerName: request.customerName,
+    channel: request.channel,
+    requestType: request.requestType,
+    message: request.message,
+    estimatedValue: request.estimatedValue,
+    priority: request.priority,
+    suggestedResponse: request.suggestedResponse,
+    nextAction: request.nextAction,
+  };
+}
+
+export default async function OrdersPage() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) redirect("/login");
+
+  const business = await getBusinessByUserId(session.user.id);
+  if (!business) redirect("/onboarding");
+
+  const persistedRequests = await getOrderRequestsByUserId(session.user.id);
+  const hasPersistedRequests = persistedRequests.length > 0;
+
+  const requests: DisplayOrderRequest[] = hasPersistedRequests
+    ? persistedRequests.map((request) => ({
+        id: request.id,
+        customerName: request.customer_name,
+        channel: request.channel,
+        requestType: request.request_type,
+        message: request.message,
+        estimatedValue: request.estimated_value,
+        priority: request.priority,
+        suggestedResponse: request.suggested_response,
+        nextAction: request.next_action,
+      }))
+    : frontlineDemoData.orderRequests.map(normalizeDemoRequest);
+
   const urgentRequests = requests.filter((request) => request.priority === "urgent" || request.priority === "high");
 
   return (
@@ -24,12 +78,14 @@ export default function OrdersPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Orders & Service Requests</h1>
           <p className="mt-1 max-w-2xl text-sm text-gray-500">
-            Compact operations queue for quotes, orders, service requests, dispatch needs, and urgent customer issues.
+            {hasPersistedRequests ? "Showing saved order and service requests from your Frontline database." : "Showing demo order and service requests until your first saved request is created."}
           </p>
         </div>
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 lg:max-w-md">
-          <span className="font-semibold">Demo mode:</span> mocked order and service records from {frontlineDemoData.account.businessName}.
-        </div>
+        {!hasPersistedRequests && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 lg:max-w-md">
+            <span className="font-semibold">Demo mode:</span> mocked order and service records from {frontlineDemoData.account.businessName}.
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -92,12 +148,12 @@ export default function OrdersPage() {
 
                 <div className="rounded-lg bg-emerald-50 p-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">AI Reply</p>
-                  <p className="mt-1 text-xs text-emerald-900">{request.suggestedResponse}</p>
+                  <p className="mt-1 text-xs text-emerald-900">{request.suggestedResponse ?? "No reply drafted yet."}</p>
                 </div>
 
                 <div className="rounded-lg bg-blue-50 p-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-700">Next Action</p>
-                  <p className="mt-1 text-xs text-blue-900">{request.nextAction}</p>
+                  <p className="mt-1 text-xs text-blue-900">{request.nextAction ?? "Review request and prepare customer follow-up."}</p>
                   {request.priority === "urgent" && (
                     <p className="mt-2 rounded-lg bg-red-50 px-2.5 py-1.5 text-[11px] font-medium text-red-700">
                       Human follow-up recommended today
