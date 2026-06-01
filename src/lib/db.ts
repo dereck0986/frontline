@@ -25,6 +25,40 @@ export interface Lead {
   updated_at: string;
 }
 
+export interface SchedulingRequest {
+  id: string;
+  business_id: string;
+  user_id: string;
+  customer_name: string;
+  channel: string;
+  requested_service: string;
+  requested_time: string | null;
+  message: string;
+  priority: string;
+  suggested_response: string | null;
+  next_action: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrderRequest {
+  id: string;
+  business_id: string;
+  user_id: string;
+  customer_name: string;
+  channel: string;
+  request_type: string;
+  message: string;
+  estimated_value: string | null;
+  priority: string;
+  suggested_response: string | null;
+  next_action: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export async function getUserByEmail(email: string): Promise<(User & { password: string }) | null> {
   const { rows } = await sql`SELECT id, name, email, password, created_at FROM users WHERE email = ${email} LIMIT 1`;
   return (rows[0] as (User & { password: string })) ?? null;
@@ -68,6 +102,34 @@ export async function createLead(data: { userId: string; businessId: string; ful
 export async function getLeadsByUserId(userId: string, limit = 50): Promise<Lead[]> {
   const { rows } = await sql`SELECT * FROM leads WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT ${limit}`;
   return rows as Lead[];
+}
+
+export async function createSchedulingRequest(data: { userId: string; businessId: string; customerName: string; channel?: string; requestedService: string; requestedTime?: string | null; message: string; priority?: string; suggestedResponse?: string | null; nextAction?: string | null; status?: string; }): Promise<SchedulingRequest> {
+  const { rows } = await sql`
+    INSERT INTO scheduling_requests (user_id, business_id, customer_name, channel, requested_service, requested_time, message, priority, suggested_response, next_action, status)
+    VALUES (${data.userId}, ${data.businessId}, ${data.customerName}, ${data.channel ?? "manual"}, ${data.requestedService}, ${data.requestedTime ?? null}, ${data.message}, ${data.priority ?? "medium"}, ${data.suggestedResponse ?? null}, ${data.nextAction ?? null}, ${data.status ?? "open"})
+    RETURNING *
+  `;
+  return rows[0] as SchedulingRequest;
+}
+
+export async function getSchedulingRequestsByUserId(userId: string, limit = 50): Promise<SchedulingRequest[]> {
+  const { rows } = await sql`SELECT * FROM scheduling_requests WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT ${limit}`;
+  return rows as SchedulingRequest[];
+}
+
+export async function createOrderRequest(data: { userId: string; businessId: string; customerName: string; channel?: string; requestType: string; message: string; estimatedValue?: string | null; priority?: string; suggestedResponse?: string | null; nextAction?: string | null; status?: string; }): Promise<OrderRequest> {
+  const { rows } = await sql`
+    INSERT INTO order_requests (user_id, business_id, customer_name, channel, request_type, message, estimated_value, priority, suggested_response, next_action, status)
+    VALUES (${data.userId}, ${data.businessId}, ${data.customerName}, ${data.channel ?? "manual"}, ${data.requestType}, ${data.message}, ${data.estimatedValue ?? null}, ${data.priority ?? "medium"}, ${data.suggestedResponse ?? null}, ${data.nextAction ?? null}, ${data.status ?? "open"})
+    RETURNING *
+  `;
+  return rows[0] as OrderRequest;
+}
+
+export async function getOrderRequestsByUserId(userId: string, limit = 50): Promise<OrderRequest[]> {
+  const { rows } = await sql`SELECT * FROM order_requests WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT ${limit}`;
+  return rows as OrderRequest[];
 }
 
 export async function getReviewsByUserId(userId: string, limit?: number): Promise<Review[]> {
