@@ -1,5 +1,23 @@
+export const dynamic = "force-dynamic";
+
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getBusinessByUserId, getSchedulingRequestsByUserId } from "@/lib/db";
 import { frontlineDemoData } from "@/lib/demo-data";
 import { CalendarDays, Clock, MessageSquareReply } from "lucide-react";
+
+type DisplaySchedulingRequest = {
+  id: string;
+  customerName: string;
+  channel: string;
+  requestedService: string;
+  requestedTime: string | null;
+  message: string;
+  priority: string;
+  suggestedResponse: string | null;
+  nextAction: string | null;
+};
 
 function getPriorityClasses(priority: string) {
   if (priority === "urgent") return "bg-red-100 text-red-700";
@@ -8,8 +26,44 @@ function getPriorityClasses(priority: string) {
   return "bg-gray-100 text-gray-700";
 }
 
-export default function SchedulingPage() {
-  const requests = frontlineDemoData.scheduleRequests;
+function normalizeDemoRequest(request: (typeof frontlineDemoData.scheduleRequests)[number]): DisplaySchedulingRequest {
+  return {
+    id: request.id,
+    customerName: request.customerName,
+    channel: request.channel,
+    requestedService: request.requestedService,
+    requestedTime: request.requestedTime,
+    message: request.message,
+    priority: request.priority,
+    suggestedResponse: request.suggestedResponse,
+    nextAction: request.nextAction,
+  };
+}
+
+export default async function SchedulingPage() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) redirect("/login");
+
+  const business = await getBusinessByUserId(session.user.id);
+  if (!business) redirect("/onboarding");
+
+  const persistedRequests = await getSchedulingRequestsByUserId(session.user.id);
+  const hasPersistedRequests = persistedRequests.length > 0;
+
+  const requests: DisplaySchedulingRequest[] = hasPersistedRequests
+    ? persistedRequests.map((request) => ({
+        id: request.id,
+        customerName: request.customer_name,
+        channel: request.channel,
+        requestedService: request.requested_service,
+        requestedTime: request.requested_time,
+        message: request.message,
+        priority: request.priority,
+        suggestedResponse: request.suggested_response,
+        nextAction: request.next_action,
+      }))
+    : frontlineDemoData.scheduleRequests.map(normalizeDemoRequest);
+
   const highPriorityCount = requests.filter((request) => request.priority === "high" || request.priority === "urgent").length;
 
   return (
@@ -18,12 +72,14 @@ export default function SchedulingPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Scheduling Operations</h1>
           <p className="mt-1 max-w-2xl text-sm text-gray-500">
-            Compact booking queue for tours, consultations, appointments, and schedule follow-up.
+            {hasPersistedRequests ? "Showing saved scheduling requests from your Frontline database." : "Showing demo scheduling requests until your first saved request is created."}
           </p>
         </div>
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 lg:max-w-md">
-          <span className="font-semibold">Demo mode:</span> mocked scheduling requests from {frontlineDemoData.account.businessName}.
-        </div>
+        {!hasPersistedRequests && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 lg:max-w-md">
+            <span className="font-semibold">Demo mode:</span> mocked scheduling requests from {frontlineDemoData.account.businessName}.
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -71,7 +127,7 @@ export default function SchedulingPage() {
                 </div>
 
                 <div className="rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700">
-                  {request.requestedTime}
+                  {request.requestedTime ?? "Time TBD"}
                 </div>
               </div>
 
@@ -83,12 +139,12 @@ export default function SchedulingPage() {
 
                 <div className="rounded-lg bg-emerald-50 p-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">AI Reply</p>
-                  <p className="mt-1 text-xs text-emerald-900">{request.suggestedResponse}</p>
+                  <p className="mt-1 text-xs text-emerald-900">{request.suggestedResponse ?? "No reply drafted yet."}</p>
                 </div>
 
                 <div className="rounded-lg bg-blue-50 p-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-700">Next Action</p>
-                  <p className="mt-1 text-xs text-blue-900">{request.nextAction}</p>
+                  <p className="mt-1 text-xs text-blue-900">{request.nextAction ?? "Confirm availability and schedule follow-up."}</p>
                 </div>
               </div>
             </div>
