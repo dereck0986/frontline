@@ -28,7 +28,7 @@ import { useState } from "react";
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/operations", label: "Operations Inbox", icon: Command, exact: false },
-  { href: "/dashboard/notifications", label: "Notifications", icon: BellRing, exact: false },
+  { href: "/dashboard/notifications", label: "Notifications", icon: BellRing, exact: false, showBadge: true },
   { href: "/dashboard/audit", label: "Audit History", icon: History, exact: false },
   { href: "/dashboard/intake", label: "Lead Intake", icon: ClipboardPlus, exact: false },
   { href: "/dashboard/lead-records", label: "Lead Records", icon: Users, exact: false },
@@ -45,9 +45,10 @@ const NAV_ITEMS = [
 interface MobileNavProps {
   userEmail: string;
   businessName: string;
+  unreadNotificationCount?: number;
 }
 
-export function MobileNav({ businessName }: MobileNavProps) {
+export function MobileNav({ businessName, unreadNotificationCount = 0 }: MobileNavProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -78,6 +79,7 @@ export function MobileNav({ businessName }: MobileNavProps) {
             const active = item.exact
               ? pathname === item.href
               : pathname.startsWith(item.href);
+            const badgeCount = item.showBadge ? unreadNotificationCount : 0;
             return (
               <Link
                 key={item.href}
@@ -91,7 +93,12 @@ export function MobileNav({ businessName }: MobileNavProps) {
                 )}
               >
                 <item.icon size={16} />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {badgeCount > 0 && (
+                  <span className="rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-bold text-white">
+                    {badgeCount > 99 ? "99+" : badgeCount}
+                  </span>
+                )}
               </Link>
             );
           })}
