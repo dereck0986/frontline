@@ -24,7 +24,7 @@ import {
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/operations", label: "Operations Inbox", icon: Command, exact: false },
-  { href: "/dashboard/notifications", label: "Notifications", icon: BellRing, exact: false },
+  { href: "/dashboard/notifications", label: "Notifications", icon: BellRing, exact: false, showBadge: true },
   { href: "/dashboard/intake", label: "Lead Intake", icon: ClipboardPlus, exact: false },
   { href: "/dashboard/lead-records", label: "Lead Records", icon: Users, exact: false },
   { href: "/dashboard/reviews", label: "Reviews", icon: MessageSquareReply, exact: false },
@@ -40,9 +40,10 @@ const NAV_ITEMS = [
 interface SidebarProps {
   userEmail: string;
   businessName: string;
+  unreadNotificationCount?: number;
 }
 
-export function Sidebar({ userEmail, businessName }: SidebarProps) {
+export function Sidebar({ userEmail, businessName, unreadNotificationCount = 0 }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -64,6 +65,7 @@ export function Sidebar({ userEmail, businessName }: SidebarProps) {
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
           const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+          const badgeCount = item.showBadge ? unreadNotificationCount : 0;
           return (
             <Link
               key={item.href}
@@ -74,7 +76,12 @@ export function Sidebar({ userEmail, businessName }: SidebarProps) {
               )}
             >
               <item.icon size={18} />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {badgeCount > 0 && (
+                <span className="rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-bold text-white">
+                  {badgeCount > 99 ? "99+" : badgeCount}
+                </span>
+              )}
             </Link>
           );
         })}
