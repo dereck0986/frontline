@@ -3,8 +3,15 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getBusinessByUserId, getSubscriptionByUserId } from "@/lib/db";
-import { frontlineDemoData } from "@/lib/demo-data";
+import {
+  getBusinessByUserId,
+  getLeadsByUserId,
+  getOperationEventsByUserId,
+  getOrderRequestsByUserId,
+  getSchedulingRequestsByUserId,
+  getSubscriptionByUserId,
+} from "@/lib/db";
+import { getNotificationsByUserId } from "@/lib/ops-side-effects";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -12,10 +19,9 @@ import {
   Users,
   CalendarDays,
   BellRing,
-  DollarSign,
   PlusCircle,
-  Star,
   ClipboardList,
+  Command,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -29,49 +35,55 @@ export default async function DashboardPage() {
 
   if (!business) redirect("/onboarding");
 
-  const demo = frontlineDemoData;
-  const dashboardMetrics = {
-    totalLeads: demo.metrics.totalLeads,
-    qualifiedLeads: demo.leads.filter((lead) => lead.status === "qualified").length,
-    followUpsDue: demo.metrics.urgentItems,
-    appointmentsBooked: demo.metrics.scheduleRequests,
-    revenueOpportunity: demo.metrics.estimatedOpenOpportunity,
-    reviewsPending: demo.metrics.reviewsPending,
-    orderRequests: demo.metrics.orderRequests,
-  };
+  const [leads, operationEvents, schedulingRequests, orderRequests, notifications] = await Promise.all([
+    getLeadsByUserId(session.user.id, 25),
+    getOperationEventsByUserId(session.user.id, 25),
+    getSchedulingRequestsByUserId(session.user.id, 25),
+    getOrderRequestsByUserId(session.user.id, 25),
+    getNotificationsByUserId(session.user.id, 25),
+  ]);
+
+  const unreadNotifications = notifications.filter((notification) => notification.status === "unread");
+  const urgentEvents = operationEvents.filter((event) => event.priority === "urgent" || event.priority === "high");
+  const latestLead = leads[0];
+  const latestEvent = operationEvents[0];
+  const latestSchedule = schedulingRequests[0];
+  const latestOrder = orderRequests[0];
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-        <p className="font-semibold">Demo mode active</p>
-        <p className="mt-1">{demo.account.notice}</p>
-      </div>
-
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
             Frontline Command Center
           </h1>
           <p className="text-gray-500 mt-1">
-            {business.name || demo.account.businessName} · Revenue Recovery Infrastructure
+            {business.name} · Live operations overview
           </p>
         </div>
 
-        <Link href="/dashboard/lead-records" className="w-full sm:w-auto">
+        <Link href="/dashboard/operations" className="w-full sm:w-auto">
           <Button size="sm" className="w-full sm:w-auto gap-2 whitespace-nowrap">
             <PlusCircle size={16} />
-            View Leads
+            Open Operations
           </Button>
         </Link>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard title="Total Leads" value={dashboardMetrics.totalLeads} subtitle="Demo captured leads" icon={Users} iconColor="text-brand-600" iconBg="bg-brand-50" />
-        <StatCard title="Qualified Leads" value={dashboardMetrics.qualifiedLeads} subtitle="AI-qualified" icon={Users} iconColor="text-emerald-600" iconBg="bg-emerald-50" />
-        <StatCard title="Urgent Items" value={dashboardMetrics.followUpsDue} subtitle="Need attention" icon={BellRing} iconColor="text-orange-600" iconBg="bg-orange-50" />
-        <StatCard title="Scheduling" value={dashboardMetrics.appointmentsBooked} subtitle="Booking requests" icon={CalendarDays} iconColor="text-indigo-600" iconBg="bg-indigo-50" />
-        <StatCard title="Opportunity" value={dashboardMetrics.revenueOpportunity} subtitle="Open pipeline" icon={DollarSign} iconColor="text-green-600" iconBg="bg-green-50" />
+        <StatCard title="Unread Alerts" value={unreadNotifications.length} subtitle="Need attention" icon={BellRing} iconColor="text-orange-600" iconBg="bg-orange-50" />
+        <StatCard title="Open Events" value={operationEvents.length} subtitle="Operations stream" icon={Command} iconColor="text-brand-600" iconBg="bg-brand-50" />
+        <StatCard title="Recent Leads" value={leads.length} subtitle="Saved leads" icon={Users} iconColor="text-emerald-600" iconBg="bg-emerald-50" />
+        <StatCard title="Scheduling" value={schedulingRequests.length} subtitle="Booking requests" icon={CalendarDays} iconColor="text-indigo-600" iconBg="bg-indigo-50" />
+        <StatCard title="Orders" value={orderRequests.length} subtitle="Service/order requests" icon={ClipboardList} iconColor="text-green-600" iconBg="bg-green-50" />
       </div>
+
+      {urgentEvents.length > 0 && (
+        <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
+          <p className="font-semibold">Priority operations detected</p>
+          <p className="mt-1">{urgentEvents.length} high or urgent item{urgentEvents.length === 1 ? "" : "s"} need review in the Operations Inbox.</p>
+        </div>
+      )}
 
       {subscription?.plan === "free" && (
         <div className="rounded-xl border border-brand-200 bg-white p-5 shadow-sm">
@@ -95,15 +107,15 @@ export default async function DashboardPage() {
       <div className="rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Demo Operations Feed</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Live Operations Snapshot</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Sample leads, reviews, scheduling requests, and order requests show how Frontline supports day-to-day business operations.
+              Recent activity from the database-backed operations, lead, scheduling, order, and notification systems.
             </p>
           </div>
 
-          <Link href="/dashboard/lead-records" className="w-full sm:w-auto shrink-0">
+          <Link href="/dashboard/notifications" className="w-full sm:w-auto shrink-0">
             <Button variant="outline" size="sm" className="w-full sm:w-auto whitespace-nowrap">
-              Open Lead Inbox
+              View Notifications
             </Button>
           </Link>
         </div>
@@ -112,22 +124,22 @@ export default async function DashboardPage() {
           <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
             <Users className="h-5 w-5 text-brand-600" />
             <p className="mt-3 text-sm font-semibold text-gray-900">Latest Lead</p>
-            <p className="mt-1 text-sm text-gray-500">{demo.leads[0].aiSummary}</p>
+            <p className="mt-1 text-sm text-gray-500">{latestLead ? `${latestLead.full_name} · ${latestLead.priority}` : "No saved leads yet."}</p>
           </div>
           <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
-            <Star className="h-5 w-5 text-yellow-600" />
-            <p className="mt-3 text-sm font-semibold text-gray-900">Review Queue</p>
-            <p className="mt-1 text-sm text-gray-500">{demo.reviews[1].nextAction}</p>
+            <Command className="h-5 w-5 text-orange-600" />
+            <p className="mt-3 text-sm font-semibold text-gray-900">Latest Operation</p>
+            <p className="mt-1 text-sm text-gray-500">{latestEvent ? latestEvent.title : "No operations events yet."}</p>
           </div>
           <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
             <CalendarDays className="h-5 w-5 text-indigo-600" />
             <p className="mt-3 text-sm font-semibold text-gray-900">Scheduling</p>
-            <p className="mt-1 text-sm text-gray-500">{demo.scheduleRequests[0].nextAction}</p>
+            <p className="mt-1 text-sm text-gray-500">{latestSchedule ? `${latestSchedule.customer_name} · ${latestSchedule.requested_service}` : "No scheduling requests yet."}</p>
           </div>
           <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
             <ClipboardList className="h-5 w-5 text-emerald-600" />
             <p className="mt-3 text-sm font-semibold text-gray-900">Orders / Requests</p>
-            <p className="mt-1 text-sm text-gray-500">{demo.orderRequests[0].nextAction}</p>
+            <p className="mt-1 text-sm text-gray-500">{latestOrder ? `${latestOrder.customer_name} · ${latestOrder.request_type}` : "No order requests yet."}</p>
           </div>
         </div>
       </div>
