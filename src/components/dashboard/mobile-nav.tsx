@@ -20,12 +20,16 @@ import {
   CalendarDays,
   ClipboardList,
   Command,
+  BellRing,
+  History,
 } from "lucide-react";
 import { useState } from "react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/operations", label: "Operations Inbox", icon: Command, exact: false },
+  { href: "/dashboard/notifications", label: "Notifications", icon: BellRing, exact: false },
+  { href: "/dashboard/audit", label: "Audit History", icon: History, exact: false },
   { href: "/dashboard/intake", label: "Lead Intake", icon: ClipboardPlus, exact: false },
   { href: "/dashboard/lead-records", label: "Lead Records", icon: Users, exact: false },
   { href: "/dashboard/reviews", label: "Reviews", icon: MessageSquareReply, exact: false },
