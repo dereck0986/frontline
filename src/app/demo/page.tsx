@@ -108,7 +108,7 @@ export default function PublicDemoPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-600">Public demo</p>
             <h1 className="mt-2 text-3xl font-bold text-gray-900">Demo Operations Inbox</h1>
             <p className="mt-2 max-w-3xl text-sm text-gray-500">
-              A safe preview of Frontline's operations stream using mocked leads, reviews, scheduling requests, and order requests. No login or database access required.
+              A safe preview of Frontline&apos;s operations stream using mocked leads, reviews, scheduling requests, and order requests. No login or database access required.
             </p>
           </div>
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 lg:max-w-md">
