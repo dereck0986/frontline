@@ -39,7 +39,7 @@ export function Hero() {
                 <ArrowRight size={18} />
               </Button>
             </Link>
-            <Link href="/dashboard/operations" className="w-full sm:w-auto">
+            <Link href="/demo" className="w-full sm:w-auto">
               <Button variant="outline" size="lg" className="w-full sm:w-auto bg-white text-gray-900 border-gray-300 hover:bg-gray-50">
                 View Demo Operations Inbox
               </Button>
