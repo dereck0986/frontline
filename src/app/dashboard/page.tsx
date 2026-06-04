@@ -10,8 +10,12 @@ import {
   getOrderRequestsByUserId,
   getSchedulingRequestsByUserId,
   getSubscriptionByUserId,
+  type Lead,
+  type OperationEvent,
+  type OrderRequest,
+  type SchedulingRequest,
 } from "@/lib/db";
-import { getNotificationsByUserId } from "@/lib/ops-side-effects";
+import { getNotificationsByUserId, type NotificationRecord } from "@/lib/ops-side-effects";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -35,13 +39,23 @@ export default async function DashboardPage() {
 
   if (!business) redirect("/onboarding");
 
-  const [leads, operationEvents, schedulingRequests, orderRequests, notifications] = await Promise.all([
-    getLeadsByUserId(session.user.id, 25),
-    getOperationEventsByUserId(session.user.id, 25),
-    getSchedulingRequestsByUserId(session.user.id, 25),
-    getOrderRequestsByUserId(session.user.id, 25),
-    getNotificationsByUserId(session.user.id, 25),
-  ]);
+  let leads: Lead[] = [];
+  let operationEvents: OperationEvent[] = [];
+  let schedulingRequests: SchedulingRequest[] = [];
+  let orderRequests: OrderRequest[] = [];
+  let notifications: NotificationRecord[] = [];
+
+  try {
+    [leads, operationEvents, schedulingRequests, orderRequests, notifications] = await Promise.all([
+      getLeadsByUserId(session.user.id, 25),
+      getOperationEventsByUserId(session.user.id, 25),
+      getSchedulingRequestsByUserId(session.user.id, 25),
+      getOrderRequestsByUserId(session.user.id, 25),
+      getNotificationsByUserId(session.user.id, 25),
+    ]);
+  } catch (error) {
+    console.error("Unable to load command center data", error);
+  }
 
   const unreadNotifications = notifications.filter((notification) => notification.status === "unread");
   const urgentEvents = operationEvents.filter((event) => event.priority === "urgent" || event.priority === "high");
