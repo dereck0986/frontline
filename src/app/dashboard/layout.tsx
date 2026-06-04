@@ -19,8 +19,14 @@ export default async function DashboardLayout({
   const business = await getBusinessByUserId(session.user.id);
   if (!business) redirect("/onboarding");
 
-  const notifications = await getNotificationsByUserId(session.user.id, 100);
-  const unreadNotificationCount = notifications.filter((notification) => notification.status === "unread").length;
+  let unreadNotificationCount = 0;
+
+  try {
+    const notifications = await getNotificationsByUserId(session.user.id, 100);
+    unreadNotificationCount = notifications.filter((notification) => notification.status === "unread").length;
+  } catch (error) {
+    console.error("Unable to load notification count", error);
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">
